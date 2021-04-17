@@ -65,11 +65,10 @@ int findGCD(vector<int> &arr, int n)
  * Solves the equation |Am - RBn| < tolerance.
  * 
  * The results are stored in a 2d vector of integers containing m1, m2, n1, n2.
- * The null vector (0 0 0 0) is always included to avoid returning an empty vector.
  * OpenMP is employed to distribute the nested loops on threads, but an ordered construct 
  * has to be used to push back the vector for thread safety. 
  * 
- * The case of m1 = m2 = n1 = n2 is already removed.
+ * The case of m1 = m2 = n1 = n2 is already removed, including the null vector.
  */
 int2dvec_t findCoincidences(const double (&A)[2][2], const double (&B)[2][2], const double &theta, const int &Nmin, const int &Nmax, const double &tolerance)
 {
@@ -115,8 +114,14 @@ int2dvec_t findCoincidences(const double (&A)[2][2], const double (&B)[2][2], co
             }
         }
     }
-
-    return coincidences;
+    if (coincidences.size() > 0)
+    {
+        return coincidences;
+    }
+    else
+    {
+        return {};
+    };
 };
 
 int2dvec_t findUniquePairs(int2dvec_t &coincidences)
@@ -124,8 +129,9 @@ int2dvec_t findUniquePairs(int2dvec_t &coincidences)
     int2dvec_t uniquePairs;
     int m1, m2, m3, m4, n1, n2, n3, n4;
     int detM, detN;
+    int _gcd;
 
-#pragma omp parallel for shared(m1, m2, m3, m4, n1, n2, n3, n4, detM, detN) schedule(dynamic) ordered collapse(2)
+#pragma omp parallel for shared(m1, m2, m3, m4, n1, n2, n3, n4, detM, detN, _gcd) schedule(dynamic) ordered collapse(2)
     for (std::size_t i = 0; i < coincidences.size(); ++i)
     {
         for (std::size_t j = 0; j < coincidences.size(); ++j)
@@ -144,8 +150,12 @@ int2dvec_t findUniquePairs(int2dvec_t &coincidences)
             if ((detM > 0) && (detN > 0) && (j != i))
             {
                 vector<int> subvec{m1, m2, m3, m4, n1, n2, n3, n4};
+                _gcd = findGCD(subvec, 8);
+                if (_gcd == 1)
+                {
 #pragma omp ordered
-                uniquePairs.push_back(subvec);
+                    uniquePairs.push_back(subvec);
+                };
             };
         };
     };
