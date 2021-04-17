@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/home/rkempt/miniconda3/envs/aims-env/include/**"
+            ],
+            "defines": [],
+            "compilerPath": "/home/rkempt/miniconda3/envs/aims-env/bin/g++",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/**",
+                    "/home/rkempt/miniconda3/envs/aims-env/lib/openmpi/**"
+                ]
+            },
+        },
+    ],
+    "version": 4
+}
