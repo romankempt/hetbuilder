@@ -6,12 +6,12 @@
 			"label": "C/C++: g++ build active file",
 			"command": "/home/rkempt/miniconda3/envs/aims-env/bin/g++",
 			"args": [
-				"-g",
-				"${file}",
+				"-O3",
+				"${workspaceFolder}/backend/*.cpp",
 				"-o",
-				"${fileDirname}/${fileBasenameNoExtension}.exe",
+				"${workspaceFolder}/backend/main.exe",
 				"-std=gnu++17",
-				"-fopenmp",
+				"-fopenmp"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"
@@ -24,6 +24,6 @@
 				"isDefault": true
 			},
 			"detail": "compiler: /home/rkempt/miniconda3/envs/aims-env/bin/g++"
-		}
+		},
 	]
 }

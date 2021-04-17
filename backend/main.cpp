@@ -4,6 +4,9 @@
 #include <array>
 #include <map>
 
+#include "logging.h"
+#include "math_functions.h"
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -13,53 +16,6 @@ using std::sin, std::cos, std::sqrt, std::pow, std::abs;
 using std::vector;
 
 typedef vector<vector<int>> int2dvec_t;
-
-void BasisDotVector(const double (&basis)[2][2], const int (&vector)[2], double (&result)[2])
-{
-    result[0] = basis[0][0] * vector[0] + basis[0][1] * vector[1];
-    result[1] = basis[1][0] * vector[0] + basis[1][1] * vector[1];
-};
-
-void RotateVector(const double (&vector)[2], const double &theta, double (&result)[2])
-{
-    double t = theta * 2 * M_PI / 180.0;
-    double R[2][2] = {{cos(t), -sin(t)}, {sin(t), cos(t)}};
-    result[0] = R[0][0] * vector[0] + R[0][1] * vector[1];
-    result[1] = R[1][0] * vector[0] + R[1][1] * vector[1];
-};
-
-float getDistance(const double (&Am)[2], const double (&RBn)[2])
-{
-    double norm;
-    norm = (Am[0] - RBn[0]) * (Am[0] - RBn[0]);
-    norm += (Am[1] - RBn[1]) * (Am[1] - RBn[1]);
-    norm = sqrt(norm);
-    return norm;
-};
-
-// Function to return gcd of a and b
-int gcd(int a, int b)
-{
-    if (a == 0)
-        return b;
-    return gcd(b % a, a);
-}
-
-// Function to find gcd of array of numbers
-int findGCD(vector<int> &arr, int n)
-{
-    int result = arr[0];
-    for (int i = 1; i < n; i++)
-    {
-        result = gcd(arr[i], result);
-
-        if (result == 1)
-        {
-            return 1;
-        }
-    }
-    return result;
-}
 
 /**
  * Solves the equation |Am - RBn| < tolerance.
@@ -83,7 +39,6 @@ int2dvec_t findCoincidences(const double (&A)[2][2], const double (&B)[2][2], co
     const int nCombinations = (int)pow((Nmax - Nmin + 1), 4);
     cout << "Doing " << nCombinations << " combinations." << endl;
 
-    //omp_set_num_threads(2);
 #pragma omp parallel for default(none) shared(A, B, theta, Nmin, Nmax, tolerance, Am, Bn, vecM, vecN, RBn, norm, match, all_equal, coincidences) schedule(dynamic) ordered collapse(4)
     for (int i = Nmin; i < (Nmax + 1); i++)
     {
@@ -124,6 +79,14 @@ int2dvec_t findCoincidences(const double (&A)[2][2], const double (&B)[2][2], co
     };
 };
 
+/**
+ * Constructs the independent pairs (m1,m2,m3,m4) and (n1,n2,n3,n4).
+ * 
+ * Loop is OpenMP parallel.
+ * 
+ * All pairs with an absolute greatest common divisor different from 1 are removed,
+ * because they correspond to scalar multiples of other smaller super cells.
+ */
 int2dvec_t findUniquePairs(int2dvec_t &coincidences)
 {
     int2dvec_t uniquePairs;
@@ -151,7 +114,7 @@ int2dvec_t findUniquePairs(int2dvec_t &coincidences)
             {
                 vector<int> subvec{m1, m2, m3, m4, n1, n2, n3, n4};
                 _gcd = findGCD(subvec, 8);
-                if (_gcd == 1)
+                if (abs(_gcd) == 1)
                 {
 #pragma omp ordered
                     uniquePairs.push_back(subvec);
@@ -171,31 +134,6 @@ int2dvec_t findUniquePairs(int2dvec_t &coincidences)
     }
 };
 
-template <typename T>
-void print_2d_vector(const vector<vector<T>> &vec)
-{
-    for (vector<vector<float>>::size_type i = 0; i < vec.size(); i++)
-    {
-        for (vector<float>::size_type j = 0; j < vec[i].size(); j++)
-        {
-            std::cout << vec[i][j] << ' ';
-        }
-        std::cout << std::endl;
-    }
-}
-
-void log_numer_of_threads()
-{
-    int limit, maxthreads;
-    limit = omp_get_thread_limit();
-    maxthreads = omp_get_max_threads();
-    printf("Limit is %d.\n", limit);
-    printf("Max is %d.\n", maxthreads);
-
-#pragma omp parallel
-    printf("Hello from thread %d of %d .\n", omp_get_thread_num(), omp_get_num_threads());
-};
-
 int main()
 {
     const double basisA[2][2] = {{1.0, 0.0}, {0.0, 1.0}};
@@ -213,7 +151,9 @@ int main()
 
     std::map<double, int2dvec_t> AnglesMN;
 
-    log_numer_of_threads();
+#ifdef _OPENMP
+    log_number_of_threads();
+#endif
 
     numberOfAngles = 10;
     thetaMin = 0;
