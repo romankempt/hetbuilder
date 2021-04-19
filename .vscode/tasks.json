@@ -11,7 +11,12 @@
 				"-o",
 				"${workspaceFolder}/backend/main.exe",
 				"-std=gnu++17",
-				"-fopenmp"
+				"-fopenmp",
+				"-I/home/rkempt/miniconda3/envs/aims-env/include",
+				"-I/home/rkempt/miniconda3/envs/aims-env/include/python3.9",
+				"-L/home/rkempt/miniconda3/envs/aims-env/lib/python3.9",
+				"-L/home/rkempt/miniconda3/envs/aims-env/lib",
+				"-lsymspg"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"

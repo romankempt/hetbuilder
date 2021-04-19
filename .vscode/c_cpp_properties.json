@@ -16,7 +16,8 @@
                 "path": [
                     "${workspaceFolder}/**",
                     "${workspaceFolder}/backend/**",
-                    "/home/rkempt/miniconda3/envs/aims-env/lib/openmpi/**"
+                    "/home/rkempt/miniconda3/envs/aims-env/lib/openmpi/**",
+                    "/home/rkempt/miniconda3/envs/aims-env/**",
                 ]
             },
         },

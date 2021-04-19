@@ -53,3 +53,39 @@ int findGCD(vector<int> &arr, int n)
     }
     return result;
 }
+
+template <typename T>
+std::vector<T> vec1x3_dot_3x3_matrix(std::vector<T> &a, std::vector<std::vector<T>> &matrix)
+{
+    std::vector<T> b(3, 0);
+    for (int i = 0; i < a.size(); i++)
+    {
+        b[i] = a[0] * matrix[0][i] + a[1] * matrix[1][i] + a[2] * matrix[2][i];
+    }
+    return b;
+};
+
+template <typename T>
+double get_3x3_matrix_determinant(vector<vector<T>> &mat)
+{
+    double determinant = 0;
+
+    //finding determinant
+    for (int i = 0; i < 3; i++)
+        determinant = determinant + (mat[0][i] * (mat[1][(i + 1) % 3] * mat[2][(i + 2) % 3] - mat[1][(i + 2) % 3] * mat[2][(i + 1) % 3]));
+
+    return determinant;
+};
+
+template <typename T>
+vector<vector<double>> invert_3x3_matrix(vector<vector<T>> &mat)
+{
+    double determinant = get_3x3_matrix_determinant(mat);
+    vector<vector<double>> minv(3, vector<double>(3, 0)); // inverse of matrix m
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+            minv[i][j] = ((mat[(j + 1) % 3][(i + 1) % 3] * mat[(j + 2) % 3][(i + 2) % 3]) - (mat[(j + 1) % 3][(i + 2) % 3] * mat[(j + 2) % 3][(i + 1) % 3])) / determinant;
+    }
+    return minv;
+}

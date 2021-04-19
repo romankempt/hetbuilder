@@ -1,11 +1,16 @@
+#include <Python.h>
 #include <cmath>
 #include <vector>
 #include <iostream>
 #include <array>
 #include <map>
 
+#include "spglib.h"
+#include "symmetry.h"
+
 #include "logging.h"
 #include "math_functions.h"
+#include "atom_functions.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -18,7 +23,7 @@ using std::vector;
 typedef vector<vector<int>> int2dvec_t;
 
 /**
- * Solves the equation |Am - RBn| < tolerance.
+ * Solves the equation |Am - R(theta)Bn| < tolerance for a given angle theta.
  * 
  * The results are stored in a 2d vector of integers containing m1, m2, n1, n2.
  * OpenMP is employed to distribute the nested loops on threads, but an ordered construct 
@@ -39,7 +44,7 @@ int2dvec_t findCoincidences(const double (&A)[2][2], const double (&B)[2][2], co
     const int nCombinations = (int)pow((Nmax - Nmin + 1), 4);
     cout << "Doing " << nCombinations << " combinations." << endl;
 
-#pragma omp parallel for default(none) shared(A, B, theta, Nmin, Nmax, tolerance, Am, Bn, vecM, vecN, RBn, norm, match, all_equal, coincidences) schedule(dynamic) ordered collapse(4)
+#pragma omp parallel for default(none) shared(A, B, theta, Nmin, Nmax, tolerance, Am, Bn, vecM, vecN, RBn, norm, match, all_equal, coincidences) schedule(static) ordered collapse(4)
     for (int i = Nmin; i < (Nmax + 1); i++)
     {
         for (int j = Nmin; j < (Nmax + 1); j++)
@@ -94,19 +99,21 @@ int2dvec_t findUniquePairs(int2dvec_t &coincidences)
     int detM, detN;
     int _gcd;
 
-#pragma omp parallel for shared(m1, m2, m3, m4, n1, n2, n3, n4, detM, detN, _gcd) schedule(dynamic) ordered collapse(2)
-    for (std::size_t i = 0; i < coincidences.size(); ++i)
+#pragma omp parallel for shared(m1, m2, m3, m4, n1, n2, n3, n4, detM, detN, _gcd) schedule(static) ordered collapse(2)
+    for (std::size_t i = 0; i < coincidences.size(); i++)
     {
-        for (std::size_t j = 0; j < coincidences.size(); ++j)
+        for (std::size_t j = 0; j < coincidences.size(); j++)
         {
             m1 = coincidences[i][0];
             m2 = coincidences[i][1];
-            n1 = coincidences[i][3];
-            n2 = coincidences[i][4];
+            n1 = coincidences[i][2];
+            n2 = coincidences[i][3];
+
             m3 = coincidences[j][0];
             m4 = coincidences[j][1];
-            n3 = coincidences[j][3];
-            n4 = coincidences[j][4];
+            n3 = coincidences[j][2];
+            n4 = coincidences[j][3];
+
             detM = m1 * m4 - m2 * m3;
             detN = n1 * n4 - n2 * n3;
 
@@ -136,10 +143,26 @@ int2dvec_t findUniquePairs(int2dvec_t &coincidences)
 
 int main()
 {
-    const double basisA[2][2] = {{1.0, 0.0}, {0.0, 1.0}};
-    const double basisB[2][2] = {{1.0, 0.0}, {0.0, 1.0}};
+    double latticeA[3][3] = {{4, 0, 0}, {0, 4, 0}, {0, 0, 4}};
+    double latticeB[3][3] = {{4, 0, 0}, {0, 4, 0}, {0, 0, 4}};
 
-    const int Nmax = 10;
+    double position[][3] = {
+        {0, 0, 0},
+        {0.5, 0.5, 0.5}};
+    int types[] = {1, 1};
+    int num_atom = 2, num_primitive_atom;
+    double symprec = 1e-5;
+
+    //test_spg_get_symmetry();
+    int SuperCellMatrix[3][3] = {{4, 0, 0}, {0, 4, 0}, {0, 0, 4}};
+    vector<vector<double>> fracpoints;
+    fracpoints = lattice_points_in_supercell(SuperCellMatrix);
+    //print_2d_vector<int>(fracpoints);
+
+    const double basisA[2][2] = {{latticeA[0][0], latticeA[0][1]}, {latticeA[1][0], latticeA[1][1]}};
+    const double basisB[2][2] = {{latticeB[0][0], latticeB[0][1]}, {latticeB[1][0], latticeB[1][1]}};
+
+    const int Nmax = 3;
     const int Nmin = -Nmax;
     const double tolerance = 0.01;
 
@@ -155,7 +178,7 @@ int main()
     log_number_of_threads();
 #endif
 
-    numberOfAngles = 10;
+    numberOfAngles = 2;
     thetaMin = 0;
     thetaMax = 90;
     for (unsigned int i = 1; i <= numberOfAngles; i++)
@@ -164,8 +187,12 @@ int main()
         printf("i %d  angle %.2f of %d \n", i, theta, numberOfAngles);
         coincidences = findCoincidences(basisA, basisB, theta, Nmin, Nmax, tolerance);
         uniquePairs = findUniquePairs(coincidences);
-        AnglesMN[theta] = uniquePairs;
+        if (uniquePairs.size() > 0)
+        {
+            AnglesMN[theta] = uniquePairs;
+        };
     };
+    //print_map_key_2d_vector_of_ints(AnglesMN);
 
     //cout << "####################" << endl;
     //cout << "Coincidences: " << coincidences.size() << endl;
