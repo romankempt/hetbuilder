@@ -3,47 +3,14 @@
 #include <cmath>
 #include <array>
 
+#include "math_functions.h"
+#include "logging_functions.h"
+
 using std::cout, std::cin, std::endl;
 using std::sin, std::cos, std::sqrt, std::pow, std::abs;
-using std::vector;
 
-typedef vector<vector<int>> int2dvec_t;
-
-template <typename T>
-std::vector<T> vec1x3_dot_3x3_matrix(std::vector<T> &a, std::vector<std::vector<T>> &matrix)
-{
-    std::vector<T> b(3, 0);
-    for (int i = 0; i < a.size(); i++)
-    {
-        b[i] = a[0] * matrix[0][i] + a[1] * matrix[1][i] + a[2] * matrix[2][i];
-    }
-    return b;
-};
-
-template <typename T>
-double get_3x3_matrix_determinant(vector<vector<T>> &mat)
-{
-    double determinant = 0;
-
-    //finding determinant
-    for (int i = 0; i < 3; i++)
-        determinant = determinant + (mat[0][i] * (mat[1][(i + 1) % 3] * mat[2][(i + 2) % 3] - mat[1][(i + 2) % 3] * mat[2][(i + 1) % 3]));
-
-    return determinant;
-};
-
-template <typename T>
-vector<vector<double>> invert_3x3_matrix(vector<vector<T>> &mat)
-{
-    double determinant = get_3x3_matrix_determinant(mat);
-    vector<vector<double>> minv(3, vector<double>(3, 0)); // inverse of matrix m
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 3; j++)
-            minv[i][j] = ((mat[(j + 1) % 3][(i + 1) % 3] * mat[(j + 2) % 3][(i + 2) % 3]) - (mat[(j + 1) % 3][(i + 2) % 3] * mat[(j + 2) % 3][(i + 1) % 3])) / determinant;
-    }
-    return minv;
-}
+typedef std::vector<std::vector<int>> int2dvec_t;
+typedef std::vector<std::vector<double>> double2dvec_t;
 
 /**
  * Find all lattice points contained in a supercell.
@@ -52,7 +19,7 @@ vector<vector<double>> invert_3x3_matrix(vector<vector<T>> &mat)
     The MIT License (MIT) Copyright (c) 2011-2012 MIT & The Regents of the
     University of California, through Lawrence Berkeley National Laboratory
  */
-vector<vector<double>> lattice_points_in_supercell(int2dvec_t &SuperCellMatrix)
+double2dvec_t lattice_points_in_supercell(int2dvec_t &SuperCellMatrix)
 {
     int2dvec_t diagonals = {{0, 0, 0},
                             {0, 0, 1},
@@ -63,16 +30,16 @@ vector<vector<double>> lattice_points_in_supercell(int2dvec_t &SuperCellMatrix)
                             {1, 1, 0},
                             {1, 1, 1}};
     int2dvec_t dpoints;
-    vector<int> dotproduct;
+    std::vector<int> dotproduct;
     for (int row = 0; row < diagonals.size(); row++)
     {
-        dotproduct = vec1x3_dot_3x3_matrix(diagonals[row], SuperCellMatrix);
+        dotproduct = vec1x3_dot_3x3_matrix<int>(diagonals[row], SuperCellMatrix);
         dpoints.push_back(dotproduct);
     }
 
     int k = dpoints.size() - 1;
-    vector<int> mins = dpoints[0];
-    vector<int> maxes = dpoints[k];
+    std::vector<int> mins = dpoints[0];
+    std::vector<int> maxes = dpoints[k];
 
     int minrowsum = dpoints[0][0] + dpoints[0][1] + dpoints[0][2];
     int maxrowsum = dpoints[k][0] + dpoints[k][1] + dpoints[k][2];
@@ -91,7 +58,7 @@ vector<vector<double>> lattice_points_in_supercell(int2dvec_t &SuperCellMatrix)
     }
 
     int2dvec_t ar, br, cr;
-    vector<int> subvec(3, 0);
+    std::vector<int> subvec(3, 0);
     for (int a = mins[0]; a < maxes[0]; a++)
     {
         subvec = {a, 0, 0};
@@ -124,26 +91,26 @@ vector<vector<double>> lattice_points_in_supercell(int2dvec_t &SuperCellMatrix)
     }
 
     // convert integer matrix to doubles
-    vector<vector<double>> allpoints_double;
+    double2dvec_t allpoints_double;
     for (int row = 0; row < allpoints.size(); row++)
     {
-        vector<double> doubleVec(allpoints[row].begin(), allpoints[row].end());
+        std::vector<double> doubleVec(allpoints[row].begin(), allpoints[row].end());
         allpoints_double.push_back(doubleVec);
     };
 
-    double determinant = get_3x3_matrix_determinant(SuperCellMatrix);
-    vector<vector<double>> InvSuperCellMatrix = invert_3x3_matrix(SuperCellMatrix);
-    vector<vector<double>> fracpoints;
-    vector<double> dp;
+    double determinant = get_3x3_matrix_determinant<int>(SuperCellMatrix);
+    double2dvec_t InvSuperCellMatrix = invert_3x3_matrix<int>(SuperCellMatrix);
+    double2dvec_t fracpoints;
+    std::vector<double> dp;
     for (int row = 0; row < allpoints.size(); row++)
     {
-        dp = vec1x3_dot_3x3_matrix(allpoints_double[row], InvSuperCellMatrix);
+        dp = vec1x3_dot_3x3_matrix<double>(allpoints_double[row], InvSuperCellMatrix);
         fracpoints.push_back(dp);
     }
 
-    vector<vector<double>> tvects;
+    double2dvec_t tvects;
     double fa, fb, fc;
-    vector<double> fvec;
+    std::vector<double> fvec;
     for (int row = 0; row < fracpoints.size(); row++)
     {
         fa = fracpoints[row][0];
