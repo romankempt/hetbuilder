@@ -30,7 +30,7 @@ template <typename T>
 std::vector<double> rotate_2d_vector(std::vector<T> &vec, const double &theta)
 {
     std::vector<double> result = {0.0, 0.0};
-    double t = theta * 2 * M_PI / 180.0;
+    double t = theta * M_PI / 180.0;
     double R[2][2] = {{cos(t), -sin(t)}, {sin(t), cos(t)}};
     result[0] = R[0][0] * vec[0] + R[0][1] * vec[1];
     result[1] = R[1][0] * vec[0] + R[1][1] * vec[1];
@@ -79,10 +79,10 @@ int find_gcd(std::vector<int> &arr, int n)
 }
 
 // Function to perform dot product of row vector(3) times matrix(3,3)
-template <typename T>
-std::vector<T> vec1x3_dot_3x3_matrix(std::vector<T> &a, std::vector<std::vector<T>> &matrix)
+template <typename T1, typename T2>
+std::vector<T1> vec1x3_dot_3x3_matrix(std::vector<T1> &a, std::vector<std::vector<T2>> &matrix)
 {
-    std::vector<T> b(3, 0);
+    std::vector<T1> b(3, 0);
     for (int i = 0; i < a.size(); i++)
     {
         b[i] = a[0] * matrix[0][i] + a[1] * matrix[1][i] + a[2] * matrix[2][i];
@@ -90,8 +90,9 @@ std::vector<T> vec1x3_dot_3x3_matrix(std::vector<T> &a, std::vector<std::vector<
     return b;
 };
 
-template std::vector<int> vec1x3_dot_3x3_matrix<int>(std::vector<int> &a, std::vector<std::vector<int>> &matrix);
-template std::vector<double> vec1x3_dot_3x3_matrix<double>(std::vector<double> &a, std::vector<std::vector<double>> &matrix);
+template std::vector<int> vec1x3_dot_3x3_matrix<int, int>(std::vector<int> &a, int2dvec_t &matrix);
+template std::vector<double> vec1x3_dot_3x3_matrix<double, int>(std::vector<double> &a, int2dvec_t &matrix);
+template std::vector<double> vec1x3_dot_3x3_matrix<double, double>(std::vector<double> &a, double2dvec_t &matrix);
 
 // Function to get determinant of 3x3 matrix
 template <typename T>
@@ -111,7 +112,7 @@ template double get_3x3_matrix_determinant<double>(std::vector<std::vector<doubl
 
 // Function to get inverse of 3x3 matrix
 template <typename T>
-std::vector<std::vector<double>> invert_3x3_matrix(std::vector<std::vector<T>> &mat)
+double2dvec_t invert_3x3_matrix(std::vector<std::vector<T>> &mat)
 {
     double determinant = get_3x3_matrix_determinant(mat);
     std::vector<std::vector<double>> minv(3, std::vector<double>(3, 0)); // inverse of matrix m
@@ -123,5 +124,45 @@ std::vector<std::vector<double>> invert_3x3_matrix(std::vector<std::vector<T>> &
     return minv;
 }
 
-template std::vector<std::vector<double>> invert_3x3_matrix<int>(std::vector<std::vector<int>> &mat);
-template std::vector<std::vector<double>> invert_3x3_matrix<double>(std::vector<std::vector<double>> &mat);
+template double2dvec_t invert_3x3_matrix<int>(int2dvec_t &mat);
+template double2dvec_t invert_3x3_matrix<double>(double2dvec_t &mat);
+
+/**
+* This function multiplies two 3x3 matrices and returns a 3x3 matrix.
+*/
+template <typename T1, typename T2>
+std::vector<std::vector<T2>> matrix3x3_dot_matrix3x3(std::vector<std::vector<T1>> &mat1, std::vector<std::vector<T2>> &mat2)
+{
+    std::vector<std::vector<T2>> res(3, std::vector<T2>(3, 0));
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            for (int k = 0; k < 3; k++)
+                res[i][j] += mat1[i][k] * mat2[k][j];
+        }
+    }
+    return res;
+};
+
+template int2dvec_t matrix3x3_dot_matrix3x3<int, int>(int2dvec_t &mat1, int2dvec_t &mat2);
+template double2dvec_t matrix3x3_dot_matrix3x3<int, double>(int2dvec_t &mat1, double2dvec_t &mat2);
+template double2dvec_t matrix3x3_dot_matrix3x3<double, double>(double2dvec_t &mat1, double2dvec_t &mat2);
+
+template <typename T>
+std::vector<std::vector<T>> transpose_matrix3x3(std::vector<std::vector<T>> &mat)
+{
+    std::vector<std::vector<T>> outtrans(mat[0].size(),
+                                         std::vector<T>(mat.size()));
+    for (int i = 0; i < mat.size(); i++)
+    {
+        for (int j = 0; j < mat[0].size(); j++)
+        {
+            outtrans[j][i] = mat[i][j];
+        }
+    }
+    return outtrans;
+};
+
+template int2dvec_t transpose_matrix3x3(int2dvec_t &mat);
+template double2dvec_t transpose_matrix3x3(double2dvec_t &mat);

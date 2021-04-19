@@ -24,8 +24,8 @@ int get_gcd(int a, int b);
 int find_gcd(std::vector<int> &arr, int n);
 
 // Function to perform dot product of row vector(3) times matrix(3,3)
-template <typename T>
-std::vector<T> vec1x3_dot_3x3_matrix(std::vector<T> &a, std::vector<std::vector<T>> &matrix);
+template <typename T1, typename T2>
+std::vector<T1> vec1x3_dot_3x3_matrix(std::vector<T1> &a, std::vector<std::vector<T2>> &matrix);
 
 // Function to get determinant of 3x3 matrix
 template <typename T>
@@ -34,3 +34,12 @@ double get_3x3_matrix_determinant(std::vector<std::vector<T>> &mat);
 // Function to get inverse of 3x3 matrix
 template <typename T>
 std::vector<std::vector<double>> invert_3x3_matrix(std::vector<std::vector<T>> &mat);
+
+/**
+* This function multiplies two 3x3 matrices and returns a 3x3 matrix.
+*/
+template <typename T1, typename T2>
+std::vector<std::vector<T2>> matrix3x3_dot_matrix3x3(std::vector<std::vector<T1>> &mat1, std::vector<std::vector<T2>> &mat2);
+
+template <typename T>
+std::vector<std::vector<T>> transpose_matrix3x3(std::vector<std::vector<T>> &mat);

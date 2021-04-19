@@ -9,6 +9,8 @@ typedef std::vector<std::vector<double>> double2dvec_t;
 // Prints 2d vector.
 template <typename T>
 void print_2d_vector(const std::vector<std::vector<T>> &vec);
+template <typename T>
+void print_2d_vector(std::vector<std::vector<T>> &vec);
 
 // Prints number of OpenMP threads.
 void log_number_of_threads();

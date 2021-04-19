@@ -23,20 +23,44 @@ void print_2d_vector(const std::vector<std::vector<T>> &vec)
     }
 };
 
-template void print_2d_vector<int>(const std::vector<std::vector<int>> &vec);
-template void print_2d_vector<double>(const std::vector<std::vector<double>> &vec);
+template <typename T>
+void print_2d_vector(std::vector<std::vector<T>> &vec)
+{
+    for (int i = 0; i < vec.size(); i++)
+    {
+        for (int j = 0; j < vec[i].size(); j++)
+        {
+            std::cout << vec[i][j] << ' ';
+        }
+        std::cout << std::endl;
+    }
+};
+
+template void print_2d_vector<int>(const int2dvec_t &vec);
+template void print_2d_vector<double>(const double2dvec_t &vec);
+template void print_2d_vector<int>(int2dvec_t &vec);
+template void print_2d_vector<double>(double2dvec_t &vec);
 
 // Prints number of OpenMP threads.
 void log_number_of_threads()
 {
 #ifdef _OPENMP
-    int limit, maxthreads;
-    limit = omp_get_thread_limit();
-    maxthreads = omp_get_max_threads();
-    //printf("Limit is %d.\n", limit);
-    //printf("Max is %d.\n", maxthreads);
-#pragma omp parallel
-    printf("Using %d OpenMP threads.\n", omp_get_num_threads());
+    int nthreads, tid;
+
+/* Fork a team of threads giving them their own copies of variables */
+#pragma omp parallel private(nthreads, tid)
+    {
+        /* Obtain thread number */
+        tid = omp_get_thread_num();
+
+        /* Only master thread does this */
+        if (tid == 0)
+        {
+            nthreads = omp_get_num_threads();
+            printf("Using %d OpenMP threads.\n", nthreads);
+        }
+
+    } /* All threads join master thread and disband */
 #endif
 };
 

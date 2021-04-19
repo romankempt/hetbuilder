@@ -6,7 +6,6 @@
 #include "math_functions.h"
 #include "logging_functions.h"
 
-using std::cout, std::cin, std::endl;
 using std::sin, std::cos, std::sqrt, std::pow, std::abs;
 
 typedef std::vector<std::vector<int>> int2dvec_t;
@@ -33,7 +32,7 @@ double2dvec_t lattice_points_in_supercell(int2dvec_t &SuperCellMatrix)
     std::vector<int> dotproduct;
     for (int row = 0; row < diagonals.size(); row++)
     {
-        dotproduct = vec1x3_dot_3x3_matrix<int>(diagonals[row], SuperCellMatrix);
+        dotproduct = vec1x3_dot_3x3_matrix<int, int>(diagonals[row], SuperCellMatrix);
         dpoints.push_back(dotproduct);
     }
 
@@ -104,7 +103,7 @@ double2dvec_t lattice_points_in_supercell(int2dvec_t &SuperCellMatrix)
     std::vector<double> dp;
     for (int row = 0; row < allpoints.size(); row++)
     {
-        dp = vec1x3_dot_3x3_matrix<double>(allpoints_double[row], InvSuperCellMatrix);
+        dp = vec1x3_dot_3x3_matrix<double, double>(allpoints_double[row], InvSuperCellMatrix);
         fracpoints.push_back(dp);
     }
 
@@ -132,9 +131,111 @@ double2dvec_t lattice_points_in_supercell(int2dvec_t &SuperCellMatrix)
     }
     catch (const char *msg)
     {
-        cout << msg << endl;
+        std::cout << msg << std::endl;
         tvects = {};
     }
 
     return tvects;
+};
+
+struct Atoms
+{
+    double2dvec_t lattice;
+    double2dvec_t positions;
+    std::vector<int> atomic_numbers;
+    int num_atom;
+    std::vector<int> spins;
+    std::vector<int> equivalent_atoms;
+};
+
+/**
+ * Generate a supercell by applying a SuperCellMatrix to
+    the input atomic configuration prim.
+*/
+Atoms make_supercell(Atoms &prim, int2dvec_t &SuperCellMatrix)
+{
+    double2dvec_t fracpoints = lattice_points_in_supercell(SuperCellMatrix);
+    double2dvec_t cell = prim.lattice;
+    double2dvec_t supercell = matrix3x3_dot_matrix3x3<int, double>(SuperCellMatrix, cell);
+
+    double2dvec_t lattice_points;
+    std::vector<double> dotproduct;
+    for (int row = 0; row < fracpoints.size(); row++)
+    {
+        dotproduct = vec1x3_dot_3x3_matrix<double, double>(fracpoints[row], supercell);
+        lattice_points.push_back(dotproduct);
+    }
+
+    double2dvec_t new_positions = prim.positions;
+    std::vector<int> new_numbers = prim.atomic_numbers;
+    std::vector<int> new_spin = prim.spins;
+    std::vector<int> new_equiv = prim.equivalent_atoms;
+    for (int i = 0; i < prim.num_atom; i++)
+    {
+        std::vector<double> atom_pos = prim.positions[i];
+        int number = prim.atomic_numbers[i];
+        int spin = prim.spins[i];
+        int equivalent = prim.equivalent_atoms[i];
+        for (int row = 0; row < lattice_points.size(); row++)
+        {
+            std::vector<double> lp = lattice_points[row];
+            if (!((lp[0] == 0) && (lp[1] == 0) && (lp[2] == 0)))
+            {
+                for (int k = 0; k < 3; k++)
+                {
+                    lp[k] += atom_pos[k];
+                }
+                new_positions.push_back(lp);
+                new_numbers.push_back(number);
+                new_spin.push_back(spin);
+                new_equiv.push_back(equivalent);
+            }
+        }
+    }
+    Atoms superatoms = {};
+    superatoms.lattice = supercell;
+    superatoms.positions = new_positions;
+    superatoms.atomic_numbers = new_numbers;
+    superatoms.num_atom = new_numbers.size();
+    superatoms.equivalent_atoms = new_equiv;
+    superatoms.spins = new_spin;
+    return superatoms;
+};
+
+Atoms rotate_atoms_around_z(Atoms &atoms, const double &theta)
+{
+    double t = M_PI * theta / 180.0;
+    double c = std::cos(t);
+    double s = std::sin(t);
+    double2dvec_t R = {{c, -s, 0}, {s, c, 0}, {0, 0, 1}};
+
+    double2dvec_t positions = atoms.positions;
+    double2dvec_t rotpositions;
+    for (int row = 0; row < positions.size(); row++)
+    {
+        std::vector<double> vec = positions[row];
+        std::vector<double> rotvec = {0.0, 0.0, 0.0};
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                rotvec[i] += (R[i][j] * vec[j]);
+            }
+        }
+        rotpositions.push_back(rotvec);
+    }
+
+    double2dvec_t tcell = transpose_matrix3x3<double>(atoms.lattice);
+    double2dvec_t rotcelltranspose = matrix3x3_dot_matrix3x3(R, tcell);
+    double2dvec_t rotcell = transpose_matrix3x3<double>(rotcelltranspose);
+
+    Atoms rotatoms = {};
+    rotatoms.positions = rotpositions;
+    rotatoms.lattice = rotcell;
+    rotatoms.num_atom = atoms.num_atom;
+    rotatoms.atomic_numbers = atoms.atomic_numbers;
+    rotatoms.spins = atoms.spins;
+    rotatoms.equivalent_atoms = atoms.equivalent_atoms;
+
+    return rotatoms;
 };

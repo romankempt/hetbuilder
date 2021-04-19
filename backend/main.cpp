@@ -146,44 +146,56 @@ int main()
     double2dvec_t positions = {
         {0, 0, 0},
         {0.5, 0.5, 0.5}};
-    int types[] = {1, 1};
+    std::vector<int> atomic_numbers = {1, 1};
     int num_atom = 2, num_primitive_atom;
     double symprec = 1e-5;
 
-    //test_spg_get_symmetry();
-    int2dvec_t SuperCellMatrix = {{4, 0, 0}, {0, 4, 0}, {0, 0, 4}};
-    double2dvec_t fracpoints;
-    fracpoints = lattice_points_in_supercell(SuperCellMatrix);
+    Atoms atoms;
+    atoms.positions = positions;
+    atoms.atomic_numbers = atomic_numbers;
+    atoms.num_atom = num_atom;
+    atoms.lattice = latticeA;
 
-    double2dvec_t basisA = {{latticeA[0][0], latticeA[0][1]}, {latticeA[1][0], latticeA[1][1]}};
-    double2dvec_t basisB = {{latticeB[0][0], latticeB[0][1]}, {latticeB[1][0], latticeB[1][1]}};
+    std::vector<int> spins(atomic_numbers.size(), 1);
+    std::vector<int> equivs(atomic_numbers.size(), 1);
+    atoms.spins = spins;
+    atoms.equivalent_atoms = equivs;
 
-    int Nmax = 3;
-    int Nmin = -Nmax;
-    double tolerance = 0.01;
-    double theta;
-    double thetaMin, thetaMax;
-    unsigned int numberOfAngles;
-    int2dvec_t coincidences;
-    int2dvec_t uniquePairs;
+    int2dvec_t SuperCellMatrix = {{2, 0, 0}, {0, 2, 0}, {0, 0, 2}};
 
-    std::map<double, int2dvec_t> AnglesMN;
+    Atoms supercell = make_supercell(atoms, SuperCellMatrix);
+    Atoms rotatoms = {};
+    rotatoms = rotate_atoms_around_z(atoms, 90);
 
-    numberOfAngles = 2;
-    thetaMin = 0;
-    thetaMax = 90;
-    for (unsigned int i = 1; i <= numberOfAngles; i++)
-    {
-        theta = (thetaMax - thetaMin) * (i / (double)numberOfAngles);
-        printf("i %d  angle %.2f of %d \n", i, theta, numberOfAngles);
-        coincidences = find_coincidences(basisA, basisB, theta, Nmin, Nmax, tolerance);
-        std::cout << "coin size: " << coincidences.size() << std::endl;
-        uniquePairs = find_unique_pairs(coincidences);
-        std::cout << "unpair size: " << uniquePairs.size() << std::endl;
-        if (uniquePairs.size() > 0)
-        {
-            AnglesMN[theta] = uniquePairs;
-        };
-    };
+    // double2dvec_t basisA = {{latticeA[0][0], latticeA[0][1]}, {latticeA[1][0], latticeA[1][1]}};
+    // double2dvec_t basisB = {{latticeB[0][0], latticeB[0][1]}, {latticeB[1][0], latticeB[1][1]}};
+
+    // int Nmax = 3;
+    // int Nmin = -Nmax;
+    // double tolerance = 0.01;
+    // double theta;
+    // double thetaMin, thetaMax;
+    // unsigned int numberOfAngles;
+    // int2dvec_t coincidences;
+    // int2dvec_t uniquePairs;
+
+    // std::map<double, int2dvec_t> AnglesMN;
+
+    // numberOfAngles = 2;
+    // thetaMin = 0;
+    // thetaMax = 90;
+    // for (unsigned int i = 1; i <= numberOfAngles; i++)
+    // {
+    //     theta = (thetaMax - thetaMin) * (i / (double)numberOfAngles);
+    //     printf("i %d  angle %.2f of %d \n", i, theta, numberOfAngles);
+    //     coincidences = find_coincidences(basisA, basisB, theta, Nmin, Nmax, tolerance);
+    //     std::cout << "coin size: " << coincidences.size() << std::endl;
+    //     uniquePairs = find_unique_pairs(coincidences);
+    //     std::cout << "unpair size: " << uniquePairs.size() << std::endl;
+    //     if (uniquePairs.size() > 0)
+    //     {
+    //         AnglesMN[theta] = uniquePairs;
+    //     };
+    // };
     //print_map_key_2d_vector(AnglesMN);
 }
