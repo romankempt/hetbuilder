@@ -6,6 +6,8 @@
 
 using std::sin, std::cos, std::sqrt, std::pow, std::abs;
 
+typedef std::vector<int> int1dvec_t;
+typedef std::vector<double> double1dvec_t;
 typedef std::vector<std::vector<int>> int2dvec_t;
 typedef std::vector<std::vector<double>> double2dvec_t;
 
@@ -21,9 +23,9 @@ std::vector<T1> basis_2x2_dot_2d_vector(const std::vector<std::vector<T1>> &basi
     return result;
 };
 
-template std::vector<int> basis_2x2_dot_2d_vector<int, int>(const std::vector<std::vector<int>> &basis, std::vector<int> &vec);
-template std::vector<double> basis_2x2_dot_2d_vector<double, int>(const std::vector<std::vector<double>> &basis, std::vector<int> &vec);
-template std::vector<double> basis_2x2_dot_2d_vector<double, double>(const std::vector<std::vector<double>> &basis, std::vector<double> &vec);
+template int1dvec_t basis_2x2_dot_2d_vector<int, int>(const int2dvec_t &basis, int1dvec_t &vec);
+template double1dvec_t basis_2x2_dot_2d_vector<double, int>(const double2dvec_t &basis, int1dvec_t &vec);
+template double1dvec_t basis_2x2_dot_2d_vector<double, double>(const double2dvec_t &basis, double1dvec_t &vec);
 
 // Function to rotate vector(2) by angle theta in degrees
 template <typename T>
@@ -37,8 +39,8 @@ std::vector<double> rotate_2d_vector(std::vector<T> &vec, const double &theta)
     return result;
 };
 
-template std::vector<double> rotate_2d_vector<int>(std::vector<int> &vec, const double &theta);
-template std::vector<double> rotate_2d_vector<double>(std::vector<double> &vec, const double &theta);
+template double1dvec_t rotate_2d_vector<int>(int1dvec_t &vec, const double &theta);
+template double1dvec_t rotate_2d_vector<double>(double1dvec_t &vec, const double &theta);
 
 // Returns distance |Am - RBn|
 template <typename T>
@@ -51,8 +53,8 @@ double get_distance(std::vector<T> &Am, std::vector<T> &RBn)
     return norm;
 };
 
-template double get_distance<int>(std::vector<int> &Am, std::vector<int> &RBn);
-template double get_distance<double>(std::vector<double> &Am, std::vector<double> &RBn);
+template double get_distance<int>(int1dvec_t &Am, int1dvec_t &RBn);
+template double get_distance<double>(double1dvec_t &Am, double1dvec_t &RBn);
 
 // Function to return gcd of a and b
 int get_gcd(int a, int b)
@@ -63,7 +65,7 @@ int get_gcd(int a, int b)
 }
 
 // Function to find gcd of array of numbers
-int find_gcd(std::vector<int> &arr, int n)
+int find_gcd(int1dvec_t &arr, int n)
 {
     int result = arr[0];
     for (int i = 1; i < n; i++)
@@ -90,9 +92,25 @@ std::vector<T1> vec1x3_dot_3x3_matrix(std::vector<T1> &a, std::vector<std::vecto
     return b;
 };
 
-template std::vector<int> vec1x3_dot_3x3_matrix<int, int>(std::vector<int> &a, int2dvec_t &matrix);
-template std::vector<double> vec1x3_dot_3x3_matrix<double, int>(std::vector<double> &a, int2dvec_t &matrix);
-template std::vector<double> vec1x3_dot_3x3_matrix<double, double>(std::vector<double> &a, double2dvec_t &matrix);
+template int1dvec_t vec1x3_dot_3x3_matrix<int, int>(int1dvec_t &a, int2dvec_t &matrix);
+template double1dvec_t vec1x3_dot_3x3_matrix<double, int>(double1dvec_t &a, int2dvec_t &matrix);
+template double1dvec_t vec1x3_dot_3x3_matrix<double, double>(double1dvec_t &a, double2dvec_t &matrix);
+
+// Function to perform dot product of matrix(3,3) times column vector
+template <typename T1, typename T2>
+std::vector<T1> matrix3x3_dot_vec3x1(std::vector<std::vector<T2>> &matrix, std::vector<T1> &a)
+{
+    std::vector<T1> b(3, 0);
+    for (int i = 0; i < a.size(); i++)
+    {
+        b[i] = a[0] * matrix[i][0] + a[1] * matrix[i][1] + a[2] * matrix[i][2];
+    }
+    return b;
+};
+
+template int1dvec_t matrix3x3_dot_vec3x1<int, int>(int2dvec_t &matrix, int1dvec_t &a);
+template double1dvec_t matrix3x3_dot_vec3x1<double, int>(int2dvec_t &matrix, double1dvec_t &a);
+template double1dvec_t matrix3x3_dot_vec3x1<double, double>(double2dvec_t &matrix, double1dvec_t &a);
 
 // Function to get determinant of 3x3 matrix
 template <typename T>
@@ -107,15 +125,15 @@ double get_3x3_matrix_determinant(std::vector<std::vector<T>> &mat)
     return determinant;
 };
 
-template double get_3x3_matrix_determinant<int>(std::vector<std::vector<int>> &mat);
-template double get_3x3_matrix_determinant<double>(std::vector<std::vector<double>> &mat);
+template double get_3x3_matrix_determinant<int>(int2dvec_t &mat);
+template double get_3x3_matrix_determinant<double>(double2dvec_t &mat);
 
 // Function to get inverse of 3x3 matrix
 template <typename T>
 double2dvec_t invert_3x3_matrix(std::vector<std::vector<T>> &mat)
 {
     double determinant = get_3x3_matrix_determinant(mat);
-    std::vector<std::vector<double>> minv(3, std::vector<double>(3, 0)); // inverse of matrix m
+    double2dvec_t minv(3, std::vector<double>(3, 0)); // inverse of matrix m
     for (int i = 0; i < 3; i++)
     {
         for (int j = 0; j < 3; j++)

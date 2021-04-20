@@ -6,8 +6,24 @@
 #include <omp.h>
 #endif
 
+typedef std::vector<int> int1dvec_t;
+typedef std::vector<double> double1dvec_t;
 typedef std::vector<std::vector<int>> int2dvec_t;
 typedef std::vector<std::vector<double>> double2dvec_t;
+
+// Prints 1d vector.
+template <typename T>
+void print_1d_vector(std::vector<T> &vec)
+{
+    for (int i = 0; i < vec.size(); i++)
+    {
+        std::cout << vec[i] << ' ';
+    }
+    std::cout << std::endl;
+};
+
+template void print_1d_vector<int>(int1dvec_t &vec);
+template void print_1d_vector<double>(double1dvec_t &vec);
 
 // Prints 2d vector.
 template <typename T>

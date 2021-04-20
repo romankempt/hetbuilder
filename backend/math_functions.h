@@ -27,6 +27,10 @@ int find_gcd(std::vector<int> &arr, int n);
 template <typename T1, typename T2>
 std::vector<T1> vec1x3_dot_3x3_matrix(std::vector<T1> &a, std::vector<std::vector<T2>> &matrix);
 
+// Function to perform dot product of matrix(3,3) times column vector(3)
+template <typename T1, typename T2>
+std::vector<T1> matrix3x3_dot_vec3x1(std::vector<std::vector<T2>> &matrix, std::vector<T1> &a);
+
 // Function to get determinant of 3x3 matrix
 template <typename T>
 double get_3x3_matrix_determinant(std::vector<std::vector<T>> &mat);
