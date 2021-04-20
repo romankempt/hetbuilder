@@ -221,55 +221,11 @@ Atoms rotate_atoms_around_z(Atoms &atoms, const double &theta)
     return rotatoms;
 };
 
-/* def stack_atoms(atom1, atom2, weight=0.5, distance=4):
-    """ Stacks two layered structures on top of each other.
-    
-    Args:
-        atom1 (atoms): Lower layer.
-        atom2 (atoms): Upper layer.
-        weight (float, optional): Value between 0 and 1, defaults to 0.5. The unit cell of the reconstructed stack is :math:`B + w \cdot (T - B)`.
-        distance (int, optional): Interlayer distance in Angström. Defaults to 4.
-    
-    Returns:
-        atoms: Reconstructed stack.
-    """
-
-    bottom = atom1.copy()
-    top = atom2.copy()
-    c1 = np.linalg.norm(bottom.cell[2])
-    c2 = np.linalg.norm(top.cell[2])
-    cell1 = bottom.cell.copy()
-    cell2 = top.cell.copy()
-    cell1[2] /= c1
-    cell2[2] /= c2
-    cell = cell1 + weight * (cell2 - cell1)
-    cell[2] /= np.linalg.norm(cell[2])
-    cell1 = cell.copy()
-    cell2 = cell.copy()
-    cell1[2] *= c1
-    cell2[2] *= c2
-
-    bottom.set_cell(cell1, scale_atoms=True)
-    top.set_cell(cell2, scale_atoms=True)
-
-    zeroshift = np.min(bottom.get_positions()[:, 2])
-    bottom.translate([0, 0, -zeroshift])
-    zeroshift = np.min(top.get_positions()[:, 2])
-    top.translate([0, 0, -zeroshift])
-    bottom_thickness = np.max(bottom.get_positions()[:, 2]) - np.min(
-        bottom.get_positions()[:, 2]
-    )
-    top.translate([0, 0, bottom_thickness])
-    top.translate([0, 0, distance])
-    bottom.extend(top)
-    stack = recenter(bottom)
-    return stack */
-
 void translate_atoms_z(Atoms &atoms, const double shift)
 {
     double2dvec_t pos1 = atoms.positions;
-    double2dvec_t new_pos = {};
-    for (int row = 0; row < pos1.size(); row++)
+    double2dvec_t new_pos;
+    for (int row = 0; row < atoms.num_atom; row++)
     {
         double1dvec_t subvec = {pos1[row][0],
                                 pos1[row][1],
@@ -281,12 +237,11 @@ void translate_atoms_z(Atoms &atoms, const double shift)
 
 std::tuple<double, double> get_min_max_z(Atoms &atoms)
 {
-    double2dvec_t pos = atoms.positions;
-    double min_z = pos[0][2];
-    double max_z = pos[pos.size()][2];
-    for (int row = 0; row < pos.size(); row++)
+    double min_z = atoms.positions[0][2];
+    double max_z = atoms.positions[atoms.num_atom - 1][2];
+    for (int row = 0; row < atoms.num_atom; row++)
     {
-        double z = pos[row][2];
+        double z = atoms.positions[row][2];
         if (z < min_z)
         {
             min_z = z;
@@ -299,14 +254,16 @@ std::tuple<double, double> get_min_max_z(Atoms &atoms)
     return std::make_tuple(min_z, max_z);
 };
 
-Atoms stack_atoms(Atoms &bottom, Atoms &top, double weight, double distance)
+Atoms stack_atoms(Atoms &bottom, Atoms &top, double &weight, double &distance)
 {
+    // need to make sure that both cells have the same initial c length (probably from python)
     auto [min_z1, max_z1] = get_min_max_z(bottom);
-    auto [min_z2, max_z2] = get_min_max_z(bottom);
+    auto [min_z2, max_z2] = get_min_max_z(top);
     translate_atoms_z(bottom, -min_z1);
     double bottom_thickness = max_z1 - min_z1;
     double top_thickness = max_z2 - min_z2;
-    translate_atoms_z(top, -min_z2 + bottom_thickness + distance);
+    double shift = -min_z2 + bottom_thickness + distance;
+    translate_atoms_z(top, shift);
 
     double2dvec_t latticeA = bottom.lattice;
     double2dvec_t latticeB = top.lattice;
@@ -318,9 +275,16 @@ Atoms stack_atoms(Atoms &bottom, Atoms &top, double weight, double distance)
             newcell[i][j] = latticeA[i][j] + weight * (latticeB[i][j] - latticeA[i][j]);
         }
     }
-    newcell[2][2] = bottom_thickness + top_thickness + distance + 50.0;
+    newcell[2][2] = bottom.lattice[2][2];
     bottom.scale_cell(newcell);
+    std::cout << "new bottom pos " << std::endl;
+    print_2d_vector(bottom.positions);
+    std::cout << "old top pos " << std::endl;
+    print_2d_vector(top.positions);
     top.scale_cell(newcell);
+    std::cout << "new top pos " << std::endl;
+    print_2d_vector(top.positions);
     Atoms stack = bottom + top;
+    stack.lattice[2][2] = bottom_thickness + top_thickness + distance + 50.0;
     return stack;
 };

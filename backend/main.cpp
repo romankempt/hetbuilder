@@ -148,7 +148,7 @@ struct Stack
     //backtansform matrices somehow
 };
 
-std::vector<Stack> build_all_supercells(Atoms &bottom, Atoms &top, std::map<double, int2dvec_t> &AnglesMN)
+std::vector<Stack> build_all_supercells(Atoms &bottom, Atoms &top, std::map<double, int2dvec_t> &AnglesMN, double &weight, double &distance)
 {
     std::vector<Stack> stacks;
     for (auto i = AnglesMN.begin(); i != AnglesMN.end(); ++i)
@@ -159,15 +159,19 @@ std::vector<Stack> build_all_supercells(Atoms &bottom, Atoms &top, std::map<doub
         std::cout << std::endl;
         for (int j = 0; j < pairs.size(); j++)
         {
-            int1dvec_t row = pairs[j];
-            int2dvec_t M = {{row[0], row[1], 0}, {row[2], row[3], 0}, {0, 0, 1}};
-            int2dvec_t N = {{row[4], row[5], 0}, {row[6], row[7], 0}, {0, 0, 1}};
-            Atoms bottomLayer = make_supercell(bottom, M);
-            Atoms topLayer = make_supercell(top, N);
-            Atoms topLayerRot = rotate_atoms_around_z(topLayer, theta);
-            Atoms interface = bottomLayer + topLayerRot;
-            if (j == 0)
+            int example = pairs.size() / 2;
+
+            if (j == example)
             {
+                int1dvec_t row = pairs[j];
+                int2dvec_t M = {{row[0], row[1], 0}, {row[2], row[3], 0}, {0, 0, 1}};
+                int2dvec_t N = {{row[4], row[5], 0}, {row[6], row[7], 0}, {0, 0, 1}};
+                Atoms bottomLayer = make_supercell(bottom, M);
+                Atoms topLayer = make_supercell(top, N);
+                Atoms topLayerRot = rotate_atoms_around_z(topLayer, theta);
+                Atoms interface = stack_atoms(bottomLayer, topLayerRot, weight, distance);
+
+                std::cout << example << std::endl;
                 std::cout << "Angle   " << theta << std::endl;
                 std::cout << "M " << std::endl;
                 print_2d_vector(M);
@@ -179,15 +183,16 @@ std::vector<Stack> build_all_supercells(Atoms &bottom, Atoms &top, std::map<doub
                 topLayerRot.print();
                 std::cout << "Interface supercell" << std::endl;
                 interface.print();
+
+                Stack stack = {};
+                stack.bottomLayer = bottomLayer;
+                stack.topLayer = topLayerRot;
+                stack.interface = interface;
+                stack.angle = theta;
+                stack.M = M;
+                stack.N = N;
+                stacks.push_back(stack);
             };
-            Stack stack = {};
-            stack.bottomLayer = bottomLayer;
-            stack.topLayer = topLayerRot;
-            stack.interface = interface;
-            stack.angle = theta;
-            stack.M = M;
-            stack.N = N;
-            stacks.push_back(stack);
         };
     };
     return stacks;
@@ -211,8 +216,6 @@ int main()
 
     Atoms bottom(latticeA, positions, atomic_numbers);
     Atoms top(latticeB, positions, atomic_numbers);
-    bottom.print();
-    top.print();
 
     int2dvec_t SuperCellMatrix = {{2, -2, 0}, {-1, 2, 0}, {0, 0, 2}};
 
@@ -222,6 +225,8 @@ int main()
     int Nmax = 3;
     int Nmin = 1;
     double tolerance = 0.01;
+    double weight = 0.5;
+    double distance = 4.0;
 
     double1dvec_t thetas = {0.00, 45.0, 90.0};
     int2dvec_t coincidences;
@@ -245,5 +250,5 @@ int main()
     //print_map_key_2d_vector(AnglesMN);
 
     std::vector<Stack> stacks;
-    stacks = build_all_supercells(bottom, top, AnglesMN);
+    stacks = build_all_supercells(bottom, top, AnglesMN, weight, distance);
 }

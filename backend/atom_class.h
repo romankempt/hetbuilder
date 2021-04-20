@@ -85,7 +85,7 @@ public:
         double2dvec_t cart_pos;
         for (int row = 0; row < scalpos.size(); row++)
         {
-            double1dvec_t subvec = matrix3x3_dot_vec3x1(cell, positions[row]);
+            double1dvec_t subvec = matrix3x3_dot_vec3x1(cell, scalpos[row]);
             cart_pos.push_back(subvec);
         }
         return cart_pos;
@@ -94,9 +94,9 @@ public:
     void scale_cell(double2dvec_t &newcell)
     {
         double2dvec_t scal_pos = get_scaled_positions();
-        lattice = newcell;
+        this->lattice = newcell;
         double2dvec_t cart_pos = scaled_positions_to_cartesian(scal_pos);
-        positions = cart_pos;
+        this->positions = cart_pos;
     };
 
     // Overload + operator to add two Atoms objects.
