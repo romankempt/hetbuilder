@@ -277,13 +277,7 @@ Atoms stack_atoms(Atoms &bottom, Atoms &top, double &weight, double &distance)
     }
     newcell[2][2] = bottom.lattice[2][2];
     bottom.scale_cell(newcell);
-    std::cout << "new bottom pos " << std::endl;
-    print_2d_vector(bottom.positions);
-    std::cout << "old top pos " << std::endl;
-    print_2d_vector(top.positions);
     top.scale_cell(newcell);
-    std::cout << "new top pos " << std::endl;
-    print_2d_vector(top.positions);
     Atoms stack = bottom + top;
     stack.lattice[2][2] = bottom_thickness + top_thickness + distance + 50.0;
     return stack;

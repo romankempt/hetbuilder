@@ -145,45 +145,29 @@ struct Stack
     double angle;
     int2dvec_t M;
     int2dvec_t N;
-    //backtansform matrices somehow
+    //backtansform matrices somehow from spglib datasets?
 };
 
-std::vector<Stack> build_all_supercells(Atoms &bottom, Atoms &top, std::map<double, int2dvec_t> &AnglesMN, double &weight, double &distance)
+std::vector<Stack> build_all_supercells(Atoms &bottom, Atoms &top, std::map<double, int2dvec_t> &AnglesMN, double &weight, double &distance, const int &no_idealize, const double &symprec, const double &angle_tolerance)
 {
     std::vector<Stack> stacks;
     for (auto i = AnglesMN.begin(); i != AnglesMN.end(); ++i)
     {
-        std::cout << "Key :" << (*i).first << std::endl;
         double theta = (*i).first;
         int2dvec_t pairs = (*i).second;
-        std::cout << std::endl;
+#pragma omp parallel for shared(stacks, AnglesMN, theta, pairs) schedule(static) ordered collapse(1)
         for (int j = 0; j < pairs.size(); j++)
         {
-            int example = pairs.size() / 2;
-
-            if (j == example)
+            int1dvec_t row = pairs[j];
+            int2dvec_t M = {{row[0], row[1], 0}, {row[2], row[3], 0}, {0, 0, 1}};
+            int2dvec_t N = {{row[4], row[5], 0}, {row[6], row[7], 0}, {0, 0, 1}};
+            Atoms bottomLayer = make_supercell(bottom, M);
+            Atoms topLayer = make_supercell(top, N);
+            Atoms topLayerRot = rotate_atoms_around_z(topLayer, theta);
+            Atoms interface = stack_atoms(bottomLayer, topLayerRot, weight, distance);
+            int success = interface.standardize(1, no_idealize, symprec, angle_tolerance);
+            if (success != 0)
             {
-                int1dvec_t row = pairs[j];
-                int2dvec_t M = {{row[0], row[1], 0}, {row[2], row[3], 0}, {0, 0, 1}};
-                int2dvec_t N = {{row[4], row[5], 0}, {row[6], row[7], 0}, {0, 0, 1}};
-                Atoms bottomLayer = make_supercell(bottom, M);
-                Atoms topLayer = make_supercell(top, N);
-                Atoms topLayerRot = rotate_atoms_around_z(topLayer, theta);
-                Atoms interface = stack_atoms(bottomLayer, topLayerRot, weight, distance);
-
-                std::cout << example << std::endl;
-                std::cout << "Angle   " << theta << std::endl;
-                std::cout << "M " << std::endl;
-                print_2d_vector(M);
-                std::cout << "N " << std::endl;
-                print_2d_vector(N);
-                std::cout << "Bottom supercell" << std::endl;
-                bottomLayer.print();
-                std::cout << "Top rot supercell" << std::endl;
-                topLayerRot.print();
-                std::cout << "Interface supercell" << std::endl;
-                interface.print();
-
                 Stack stack = {};
                 stack.bottomLayer = bottomLayer;
                 stack.topLayer = topLayerRot;
@@ -191,8 +175,9 @@ std::vector<Stack> build_all_supercells(Atoms &bottom, Atoms &top, std::map<doub
                 stack.angle = theta;
                 stack.M = M;
                 stack.N = N;
+#pragma omp ordered
                 stacks.push_back(stack);
-            };
+            }
         };
     };
     return stacks;
@@ -212,7 +197,6 @@ int main()
         {0.5, 0.5, 0.5}};
     int1dvec_t atomic_numbers = {1, 1};
     int num_atom = 2, num_primitive_atom;
-    double symprec = 1e-5;
 
     Atoms bottom(latticeA, positions, atomic_numbers);
     Atoms top(latticeB, positions, atomic_numbers);
@@ -227,6 +211,9 @@ int main()
     double tolerance = 0.01;
     double weight = 0.5;
     double distance = 4.0;
+    const int no_idealize = 0;
+    const double symprec = 1e-5;
+    const double angle_tolerance = 5.0;
 
     double1dvec_t thetas = {0.00, 45.0, 90.0};
     int2dvec_t coincidences;
@@ -250,5 +237,13 @@ int main()
     //print_map_key_2d_vector(AnglesMN);
 
     std::vector<Stack> stacks;
-    stacks = build_all_supercells(bottom, top, AnglesMN, weight, distance);
+    stacks = build_all_supercells(bottom, top, AnglesMN, weight, distance, no_idealize, symprec, angle_tolerance);
+    std::cout << "standardized stacks size: " << stacks.size() << std::endl;
+    for (int i = 0; i < stacks.size(); i++)
+    {
+        Atoms example = stacks[i].interface;
+        example.print();
+    }
+
+    // next is filtering
 }

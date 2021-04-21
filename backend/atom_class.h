@@ -1,6 +1,9 @@
 #pragma once
 #include <vector>
 #include <iostream>
+#include <array>
+
+#include "spglib.h"
 
 #include "logging_functions.h"
 #include "math_functions.h"
@@ -57,6 +60,9 @@ public:
         print_2d_vector(lattice);
         std::cout << "Positions: " << std::endl;
         print_2d_vector(positions);
+        std::cout << "Scaled Positions: " << std::endl;
+        double2dvec_t scalpos = get_scaled_positions();
+        print_2d_vector(scalpos);
         std::cout << "Atomic numbers: " << std::endl;
         print_1d_vector(atomic_numbers);
         std::cout << "Atomic spins: " << std::endl;
@@ -118,5 +124,81 @@ public:
 
         Atoms newAtoms(cell1, pos1, numbers1, spins1, equiv1);
         return newAtoms;
+    };
+
+    void lattice_to_spglib_array(double arr[3][3])
+    {
+        // note that the spglib lattice basis is transposed
+        for (unsigned i = 0; (i < 3); i++)
+        {
+            for (unsigned j = 0; (j < 3); j++)
+            {
+                arr[j][i] = lattice[i][j];
+            }
+        }
+    };
+
+    void positions_to_spglib_array(double arr[][3])
+    {
+        double2dvec_t scalpos = get_scaled_positions();
+        for (unsigned i = 0; i < scalpos.size(); i++)
+        {
+            for (unsigned j = 0; (j < 3); j++)
+            {
+                arr[i][j] = scalpos[i][j];
+            }
+        }
+    };
+
+    void atomic_numbers_to_spglib_types(int arr[])
+    {
+        for (unsigned i = 0; (i < num_atom); i++)
+        {
+            arr[i] = atomic_numbers[i];
+        }
+    };
+
+    int standardize(const int to_primitive = 1, const int no_idealize = 0, const double symprec = 1e-5, const double angle_tolerance = 5.0)
+    {
+        double spglibBasis[3][3];
+        lattice_to_spglib_array(spglibBasis);
+        double spglibPos[num_atom][3];
+        positions_to_spglib_array(spglibPos);
+        int spglibTypes[num_atom];
+        atomic_numbers_to_spglib_types(spglibTypes);
+        int success = spgat_standardize_cell(spglibBasis,
+                                             spglibPos,
+                                             spglibTypes,
+                                             num_atom,
+                                             to_primitive,
+                                             no_idealize,
+                                             symprec,
+                                             angle_tolerance);
+        if (success != 0)
+        {
+            for (unsigned i = 0; (i < 3); i++)
+            {
+                for (unsigned j = 0; (j < 3); j++)
+                {
+                    this->lattice[j][i] = spglibBasis[i][j];
+                }
+            }
+            int arrSize = sizeof(spglibPos) / sizeof(spglibPos[0]);
+            this->num_atom = arrSize;
+            double2dvec_t spglibScalPos;
+            int1dvec_t spglibNewTypes(num_atom, 0);
+            for (unsigned i = 0; (i < num_atom); i++)
+            {
+                double1dvec_t subvec = {spglibPos[i][0], spglibPos[i][1], spglibPos[i][2]};
+                spglibScalPos.push_back(subvec);
+                spglibNewTypes[i] = spglibTypes[i];
+            }
+
+            double2dvec_t cart_pos = scaled_positions_to_cartesian(spglibScalPos);
+            this->positions = cart_pos;
+            this->atomic_numbers = spglibNewTypes;
+        }
+
+        return success;
     }
 };
