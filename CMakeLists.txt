@@ -1,23 +1,16 @@
 cmake_minimum_required(VERSION 3.17.2)
 
 # set the project name
-project(heterostructure-builder)
+project(hetbuilder)
 
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17 -fopenmp")
 
-# looking for OpenMP
-option(USE_OPENMP "build OpenMP programs with OpenMP support enabled" ON)
-if(USE_OPENMP)
-  find_package(OpenMP 4.5 REQUIRED)
-endif()
-
-
 # specify sources
 file(GLOB SOURCES    
-    backend/*.cpp
+    ${PROJECT_SOURCE_DIR}/hetbuilder/backend/*.cpp
 )
 
 if((NOT CMAKE_BUILD_TYPE) OR (CMAKE_BUILD_TYPE MATCHES Release))
@@ -26,14 +19,14 @@ if((NOT CMAKE_BUILD_TYPE) OR (CMAKE_BUILD_TYPE MATCHES Release))
   # add the dynamic library
   set(TARGET coincidence_algorithm)
   add_library(${TARGET} MODULE ${SOURCES})  
-  message("-- TARGET: ${TARGET}")
+  message("-- TARGET LIBRARY: ${TARGET}")
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES TESTING)
   message("-- BUILD TYPE: ${CMAKE_BUILD_TYPE}")
   set(TARGET coincidence_algorithm.exe)
   add_executable(${TARGET} ${SOURCES})  
-  message("-- TARGET: ${TARGET}")
+  message("-- TARGET EXECUTABLE: ${TARGET}")
 endif()
 
 
@@ -48,15 +41,27 @@ else()
    message("-- Found spglib ${SPGLIB}")
 endif()
 
-#add_subdirectory(interfacebuilder/backend/external/pybind11)
-target_link_libraries(${TARGET} PUBLIC ${Python3_LIBRARY} OpenMP::OpenMP_CXX symspg)
-
-if(CMAKE_BUILD_TYPE MATCHES Release)
-  #pybind11_add_module(backend ${SOURCES})
-  set_target_properties(coincidence_algorithm
-      PROPERTIES
-      ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/heterostructure_builder"
-      LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/heterostructure_builder"
-      RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/heterostructure_builder"
-  )
+# looking for OpenMP
+option(USE_OPENMP "build OpenMP programs with OpenMP support enabled" ON)
+if(USE_OPENMP)
+  find_package(OpenMP 4.5 REQUIRED)
 endif()
+
+
+message("-- Project source directory: ${PROJECT_SOURCE_DIR}")
+
+target_link_libraries(${TARGET} PUBLIC ${Python3_LIBRARY} OpenMP::OpenMP_CXX ${SPGLIB})
+
+set(PYBINDDIR ${PROJECT_SOURCE_DIR}/external/pybind11)
+message("-- Pybind11 source directory: ${PYBINDDIR}")
+add_subdirectory(${PROJECT_SOURCE_DIR}/external/pybind11)
+pybind11_add_module(pybackend ${PROJECT_SOURCE_DIR}/hetbuilder/backend/pybindings.cpp)
+
+# if(CMAKE_BUILD_TYPE MATCHES Release)
+#   set_target_properties(pybackend
+#       PROPERTIES
+#       #ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/hetbuilder"
+#       #LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/hetbuilder"
+#       #RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/hetbuilder"
+#   )
+# endif()

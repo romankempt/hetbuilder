@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/home/rkempt/miniconda3/envs/aims-env/bin/python",
+    "python.pythonPath": "/home/rkempt/miniconda3/envs/hetbuilder/bin/python",
     "files.associations": {
         "iostream": "cpp",
         "array": "cpp",
@@ -51,5 +51,6 @@
         "streambuf": "cpp",
         "cinttypes": "cpp",
         "typeinfo": "cpp"
-    }
+    },
+    "cmake.configureOnOpen": false
 }
