@@ -166,12 +166,22 @@ public:
         positions_to_spglib_array(spglibPos);
         int spglibTypes[num_atom];
         atomic_numbers_to_spglib_types(spglibTypes);
+
         int success = spgat_standardize_cell(spglibBasis,
                                              spglibPos,
                                              spglibTypes,
                                              num_atom,
                                              to_primitive,
                                              no_idealize,
+                                             symprec,
+                                             angle_tolerance);
+        int spacegroup;
+        char symbol[11];
+        spacegroup = spgat_get_international(symbol,
+                                             spglibBasis,
+                                             spglibPos,
+                                             spglibTypes,
+                                             num_atom,
                                              symprec,
                                              angle_tolerance);
         if (success != 0)
@@ -199,6 +209,47 @@ public:
             this->atomic_numbers = spglibNewTypes;
         }
 
-        return success;
+        return spacegroup;
     }
+};
+
+class Interface
+{
+public:
+    Atoms BottomLayer;
+    Atoms TopLayer;
+    Atoms Stack;
+    double Angle;
+    int2dvec_t M;
+    int2dvec_t N;
+    int SpaceGroup;
+    Interface(Atoms bottomLayer,
+              Atoms topLayer,
+              Atoms stack,
+              double angle,
+              int2dvec_t MatrixM,
+              int2dvec_t MatrixN,
+              int spaceGroup)
+    {
+        BottomLayer = bottomLayer;
+        TopLayer = topLayer;
+        Stack = stack;
+        Angle = angle;
+        M = MatrixM;
+        N = MatrixN;
+        SpaceGroup = spaceGroup;
+    };
+
+    bool operator==(Interface &other)
+    {
+        Atoms first = this->Stack;
+        Atoms second = other.Stack;
+        bool spgmatch = (this->SpaceGroup == other.SpaceGroup);
+        bool nummatch = (first.num_atom == second.num_atom);
+        double areaM1 = this->M[0][0] * this->M[1][1] - this->M[0][1] * this->M[1][0];
+        double areaM2 = other.M[0][0] * other.M[1][1] - other.M[0][1] * other.M[1][0];
+        bool areamatch = std::abs(areaM1 - areaM2) < 1e-6;
+        bool is_equal = (spgmatch && nummatch && areamatch);
+        return is_equal;
+    };
 };

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <array>
 #include <map>
+#include <algorithm>
 
 #include "spglib.h"
 #include "symmetry.h"
@@ -95,7 +96,7 @@ int2dvec_t find_unique_pairs(int2dvec_t &coincidences)
 {
     int2dvec_t uniquePairs;
 
-#pragma omp parallel for shared(uniquePairs) schedule(static) ordered collapse(1)
+#pragma omp parallel for shared(uniquePairs, coincidences) schedule(static) ordered collapse(1)
     for (int i = 0; i < coincidences.size(); i++)
     {
         for (int j = i + 1; j < coincidences.size(); j++)
@@ -137,20 +138,9 @@ int2dvec_t find_unique_pairs(int2dvec_t &coincidences)
     }
 };
 
-struct Stack
+std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, std::map<double, int2dvec_t> &AnglesMN, double &weight, double &distance, const int &no_idealize, const double &symprec, const double &angle_tolerance)
 {
-    Atoms bottomLayer;
-    Atoms topLayer;
-    Atoms interface;
-    double angle;
-    int2dvec_t M;
-    int2dvec_t N;
-    //backtansform matrices somehow from spglib datasets?
-};
-
-std::vector<Stack> build_all_supercells(Atoms &bottom, Atoms &top, std::map<double, int2dvec_t> &AnglesMN, double &weight, double &distance, const int &no_idealize, const double &symprec, const double &angle_tolerance)
-{
-    std::vector<Stack> stacks;
+    std::vector<Interface> stacks;
     for (auto i = AnglesMN.begin(); i != AnglesMN.end(); ++i)
     {
         double theta = (*i).first;
@@ -165,22 +155,41 @@ std::vector<Stack> build_all_supercells(Atoms &bottom, Atoms &top, std::map<doub
             Atoms topLayer = make_supercell(top, N);
             Atoms topLayerRot = rotate_atoms_around_z(topLayer, theta);
             Atoms interface = stack_atoms(bottomLayer, topLayerRot, weight, distance);
-            int success = interface.standardize(1, no_idealize, symprec, angle_tolerance);
-            if (success != 0)
+            int spacegroup = interface.standardize(1, no_idealize, symprec, angle_tolerance);
+            if (spacegroup != 0)
             {
-                Stack stack = {};
-                stack.bottomLayer = bottomLayer;
-                stack.topLayer = topLayerRot;
-                stack.interface = interface;
-                stack.angle = theta;
-                stack.M = M;
-                stack.N = N;
+                Interface stack(bottomLayer, topLayerRot, interface, theta, M, N, spacegroup);
 #pragma omp ordered
                 stacks.push_back(stack);
             }
         };
     };
     return stacks;
+};
+
+std::vector<Interface> filter_supercells(std::vector<Interface> &stacks)
+{
+    std::vector<Interface> filtered_stacks;
+    int1dvec_t indices;
+#pragma omp parallel for shared(stacks, indices) schedule(static) ordered collapse(1)
+    for (int i = 0; i < stacks.size(); i++)
+    {
+        for (int j = i + 1; j < stacks.size(); j++)
+        {
+            bool is_equal = (stacks[i] == (stacks[j]));
+            if (!is_equal)
+            {
+#pragma omp ordered
+                indices.push_back(i);
+            };
+        }
+    }
+    indices.erase(std::unique(indices.begin(), indices.end()), indices.end());
+    for (const auto &i : indices)
+    {
+        filtered_stacks.push_back(stacks[i]);
+    }
+    return filtered_stacks;
 };
 
 int main()
@@ -215,6 +224,8 @@ int main()
     const double symprec = 1e-5;
     const double angle_tolerance = 5.0;
 
+    //SpglibSpacegroupType spg_get_spacegroup_type(const int hall_number)
+
     double1dvec_t thetas = {0.00, 45.0, 90.0};
     int2dvec_t coincidences;
     int2dvec_t uniquePairs;
@@ -236,13 +247,17 @@ int main()
     };
     //print_map_key_2d_vector(AnglesMN);
 
-    std::vector<Stack> stacks;
+    std::vector<Interface> stacks;
+    std::vector<Interface> fstacks;
     stacks = build_all_supercells(bottom, top, AnglesMN, weight, distance, no_idealize, symprec, angle_tolerance);
     std::cout << "standardized stacks size: " << stacks.size() << std::endl;
-    for (int i = 0; i < stacks.size(); i++)
+    fstacks = filter_supercells(stacks);
+    std::cout << "filtered stacks size: " << fstacks.size() << std::endl;
+    for (int i = 0; i < fstacks.size(); i++)
     {
-        Atoms example = stacks[i].interface;
-        example.print();
+        Atoms example = fstacks[i].Stack;
+        print_2d_vector(example.lattice);
+        std::cout << std::endl;
     }
 
     // next is filtering
