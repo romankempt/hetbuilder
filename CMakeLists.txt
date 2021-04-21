@@ -13,18 +13,18 @@ file(GLOB SOURCES
     ${PROJECT_SOURCE_DIR}/hetbuilder/backend/*.cpp
 )
 
-if((NOT CMAKE_BUILD_TYPE) OR (CMAKE_BUILD_TYPE MATCHES Release))
-  set(CMAKE_BUILD_TYPE Release)
+if((NOT CMAKE_BUILD_TYPE) OR (CMAKE_BUILD_TYPE MATCHES RELEASE))
+  set(CMAKE_BUILD_TYPE RELEASE)
   set(CMAKE_CXX_FLAGS_RELEASE "-O3")
   # add the dynamic library
-  set(TARGET coincidence_algorithm)
+  set(TARGET hetbuild)
   add_library(${TARGET} MODULE ${SOURCES})  
   message("-- TARGET LIBRARY: ${TARGET}")
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES TESTING)
   message("-- BUILD TYPE: ${CMAKE_BUILD_TYPE}")
-  set(TARGET coincidence_algorithm.exe)
+  set(TARGET hetbuild.exe)
   add_executable(${TARGET} ${SOURCES})  
   message("-- TARGET EXECUTABLE: ${TARGET}")
 endif()
@@ -55,13 +55,13 @@ target_link_libraries(${TARGET} PUBLIC ${Python3_LIBRARY} OpenMP::OpenMP_CXX ${S
 set(PYBINDDIR ${PROJECT_SOURCE_DIR}/external/pybind11)
 message("-- Pybind11 source directory: ${PYBINDDIR}")
 add_subdirectory(${PROJECT_SOURCE_DIR}/external/pybind11)
-pybind11_add_module(pybackend ${PROJECT_SOURCE_DIR}/hetbuilder/backend/pybindings.cpp)
+pybind11_add_module(coincidence_algorithm ${PROJECT_SOURCE_DIR}/hetbuilder/backend/pybindings.cpp)
 
-# if(CMAKE_BUILD_TYPE MATCHES Release)
-#   set_target_properties(pybackend
-#       PROPERTIES
-#       #ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/hetbuilder"
-#       #LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/hetbuilder"
-#       #RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/hetbuilder"
-#   )
-# endif()
+if(CMAKE_BUILD_TYPE MATCHES RELEASE)
+  set_target_properties(coincidence_algorithm
+      PROPERTIES
+      ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/hetbuilder"
+      LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/hetbuilder"
+      RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/hetbuilder"
+  )
+endif()

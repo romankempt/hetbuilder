@@ -13,16 +13,14 @@ from setuptools.command.build_ext import build_ext
 
 import re
 
-# VERSIONFILE = "interfacebuilder/__init__.py"
-# verstrline = open(VERSIONFILE, "rt").read()
-# VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
-# mo = re.search(VSRE, verstrline, re.M)
-# if mo:
-#    version = mo.group(1)
-# else:
-#    raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
-
-version = "0.1"
+VERSIONFILE = "hetbuilder/__init__.py"
+verstrline = open(VERSIONFILE, "rt").read()
+VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
+mo = re.search(VSRE, verstrline, re.M)
+if mo:
+    version = mo.group(1)
+else:
+    raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
 
 class CMakeBuild(build_ext):
@@ -42,7 +40,7 @@ class CMakeBuild(build_ext):
             "-DPYTHON_EXECUTABLE=" + sys.executable,
         ]
 
-        cfg = "Debug" if self.debug else "Release"
+        cfg = "DEBUG" if self.debug else "RELEASE"
         build_args = ["--config", cfg]
 
         cmake_args += ["-DCMAKE_BUILD_TYPE=" + cfg]
@@ -85,7 +83,15 @@ class CMakeBuild(build_ext):
         self.copy_file(source_path, dest_path)
 
 
-ext_modules = [Extension("pybackend", sources=["backend/pybindings.cpp"])]
+ext_modules = [
+    Extension(
+        "hetbuilder.coincidence_algorithm",
+        sources=[
+            "hetbuilder/backend/pybindings.cpp",
+            "hetbuilder/backend/coincidence_algorithm.cpp",
+        ],
+    )
+]
 
 setup(
     name="hetbuilder",
@@ -97,7 +103,22 @@ setup(
     license="MIT",
     # url="https://github.com/AK-Heine/2D-Interface-Builder",
     # download_url="https://github.com/AK-Heine/2D-Interface-Builder",
-    packages=find_packages(),
+    packages=find_packages(
+        where="hetbuilder",
+        exclude=[
+            "*.tests",
+            "*.tests.*",
+            "tests.*",
+            "tests",
+            "WIP",
+            "pictures",
+            "examples",
+            "docs",
+            "*__pycache__*",
+            "*vscode*",
+        ],
+    ),
+    package_data={"": ["*.so"]},
     # scripts=["bin/build_interface"],
     install_requires=[
         "spglib",

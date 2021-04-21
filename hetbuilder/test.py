@@ -1,5 +1,4 @@
 from hetbuilder import *
 
-
-# test_coincidence_algorithm()
+pybackend.test_coincidence_algorithm()
 

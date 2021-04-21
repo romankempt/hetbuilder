@@ -6,7 +6,7 @@
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(pybackend, m)
+PYBIND11_MODULE(coincidence_algorithm, m)
 {
     m.doc() = "backend c++ implementation"; // optional module docstring
     m.def("test_coincidence_algorithm", &test_coincidence_algorithm, "Test function");
