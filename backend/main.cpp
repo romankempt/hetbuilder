@@ -7,7 +7,6 @@
 #include <algorithm>
 
 #include "spglib.h"
-#include "symmetry.h"
 
 #include "logging_functions.h"
 #include "math_functions.h"
