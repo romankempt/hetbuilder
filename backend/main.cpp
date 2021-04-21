@@ -138,6 +138,15 @@ int2dvec_t find_unique_pairs(int2dvec_t &coincidences)
     }
 };
 
+/**
+ * Builds all supercells, applying the supercell matrices M and N and the Rotation R(theta).
+ * 
+ * The unit cell of the stack (interface) is given bei C = A + weight * (B - A).
+ * The interfaces are standardized via spglib for the given symprec and angle_tolerance.
+ * The loop over the supecell generation and standardization is OpenMP parallel.
+ * 
+ * Returns a vector of interfaces.
+ */
 std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, std::map<double, int2dvec_t> &AnglesMN, double &weight, double &distance, const int &no_idealize, const double &symprec, const double &angle_tolerance)
 {
     std::vector<Interface> stacks;
@@ -167,6 +176,13 @@ std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, std::map<
     return stacks;
 };
 
+/**
+ * Filters the interfaces.
+ * 
+ * Interfaces are considered equal if their spacegroup, area and number of atoms matches.
+ * 
+ * Returns a vector of interfaces.
+ */
 std::vector<Interface> filter_supercells(std::vector<Interface> &stacks)
 {
     std::vector<Interface> filtered_stacks;

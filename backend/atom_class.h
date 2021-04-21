@@ -246,9 +246,9 @@ public:
         Atoms second = other.Stack;
         bool spgmatch = (this->SpaceGroup == other.SpaceGroup);
         bool nummatch = (first.num_atom == second.num_atom);
-        double areaM1 = this->M[0][0] * this->M[1][1] - this->M[0][1] * this->M[1][0];
-        double areaM2 = other.M[0][0] * other.M[1][1] - other.M[0][1] * other.M[1][0];
-        bool areamatch = std::abs(areaM1 - areaM2) < 1e-6;
+        double area1 = first.lattice[0][0] * first.lattice[1][1] - first.lattice[0][1] * first.lattice[1][0];
+        double area2 = second.lattice[0][0] * second.lattice[1][1] - second.lattice[0][1] * second.lattice[1][0];
+        bool areamatch = std::abs(area1 - area2) < 1e-6;
         bool is_equal = (spgmatch && nummatch && areamatch);
         return is_equal;
     };
