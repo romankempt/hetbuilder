@@ -11,7 +11,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17 -fopenmp")
 
 # specify sources
 file(GLOB SOURCES    
-    ${PROJECT_SOURCE_DIR}/hetbuilder/backend/*.cpp
+    ${PROJECT_SOURCE_DIR}/backend/*.cpp
 )
 
 if((NOT CMAKE_BUILD_TYPE) OR (CMAKE_BUILD_TYPE MATCHES RELEASE))
@@ -56,7 +56,7 @@ endif()
 
 if(CMAKE_BUILD_TYPE MATCHES RELEASE)
   find_package(pybind11 CONFIG REQUIRED)
-  pybind11_add_module(hetbuilder_backend ${PROJECT_SOURCE_DIR}/hetbuilder/backend/pybindings.cpp ${SOURCES})
+  pybind11_add_module(hetbuilder_backend ${PROJECT_SOURCE_DIR}/backend/pybindings.cpp ${SOURCES})
   target_link_libraries(hetbuilder_backend PRIVATE ${Python3_LIBRARY} OpenMP::OpenMP_CXX ${SPGLIB})
 else()
   target_link_libraries(${TARGET} PUBLIC ${Python3_LIBRARY} OpenMP::OpenMP_CXX ${SPGLIB})
