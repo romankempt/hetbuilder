@@ -223,6 +223,13 @@ public:
     int2dvec_t M;
     int2dvec_t N;
     int SpaceGroup;
+
+    friend bool operator==(const Interface &c1, const Interface &c2);
+    friend bool operator>(const Interface &c1, const Interface &c2);
+    friend bool operator>=(const Interface &c1, const Interface &c2);
+    friend bool operator<(const Interface &c1, const Interface &c2);
+    friend bool operator<=(const Interface &c1, const Interface &c2);
+
     Interface(Atoms bottomLayer,
               Atoms topLayer,
               Atoms stack,
@@ -239,17 +246,55 @@ public:
         N = MatrixN;
         SpaceGroup = spaceGroup;
     };
-
-    bool operator==(Interface &other)
-    {
-        Atoms first = this->Stack;
-        Atoms second = other.Stack;
-        bool spgmatch = (this->SpaceGroup == other.SpaceGroup);
-        bool nummatch = (first.num_atom == second.num_atom);
-        double area1 = first.lattice[0][0] * first.lattice[1][1] - first.lattice[0][1] * first.lattice[1][0];
-        double area2 = second.lattice[0][0] * second.lattice[1][1] - second.lattice[0][1] * second.lattice[1][0];
-        bool areamatch = std::abs(area1 - area2) < 1e-6;
-        bool is_equal = (spgmatch && nummatch && areamatch);
-        return is_equal;
-    };
 };
+
+inline bool operator==(const Interface &c1, const Interface &c2)
+{
+    bool spgmatch = (c1.SpaceGroup == c2.SpaceGroup);
+    bool nummatch = (c1.Stack.num_atom == c2.Stack.num_atom);
+    double area1 = c1.Stack.lattice[0][0] * c1.Stack.lattice[1][1] - c1.Stack.lattice[0][1] * c1.Stack.lattice[1][0];
+    double area2 = c2.Stack.lattice[0][0] * c2.Stack.lattice[1][1] - c2.Stack.lattice[0][1] * c2.Stack.lattice[1][0];
+    bool areamatch = std::abs(std::abs(area1) - std::abs(area2)) < 1e-6;
+    bool equals = (spgmatch && nummatch && areamatch);
+    return equals;
+}
+
+inline bool operator>(const Interface &c1, const Interface &c2)
+{
+    bool nummatch = (c1.Stack.num_atom > c2.Stack.num_atom);
+    double area1 = c1.Stack.lattice[0][0] * c1.Stack.lattice[1][1] - c1.Stack.lattice[0][1] * c1.Stack.lattice[1][0];
+    double area2 = c2.Stack.lattice[0][0] * c2.Stack.lattice[1][1] - c2.Stack.lattice[0][1] * c2.Stack.lattice[1][0];
+    bool areamatch = std::abs(area1) > std::abs(area2);
+    bool greater_than = (nummatch && areamatch);
+    return greater_than;
+}
+
+inline bool operator>=(const Interface &c1, const Interface &c2)
+{
+    bool nummatch = (c1.Stack.num_atom >= c2.Stack.num_atom);
+    double area1 = c1.Stack.lattice[0][0] * c1.Stack.lattice[1][1] - c1.Stack.lattice[0][1] * c1.Stack.lattice[1][0];
+    double area2 = c2.Stack.lattice[0][0] * c2.Stack.lattice[1][1] - c2.Stack.lattice[0][1] * c2.Stack.lattice[1][0];
+    bool areamatch = std::abs(area1) >= std::abs(area2);
+    bool greater_than = (nummatch && areamatch);
+    return greater_than;
+}
+
+inline bool operator<(const Interface &c1, const Interface &c2)
+{
+    bool nummatch = (c1.Stack.num_atom < c2.Stack.num_atom);
+    double area1 = c1.Stack.lattice[0][0] * c1.Stack.lattice[1][1] - c1.Stack.lattice[0][1] * c1.Stack.lattice[1][0];
+    double area2 = c2.Stack.lattice[0][0] * c2.Stack.lattice[1][1] - c2.Stack.lattice[0][1] * c2.Stack.lattice[1][0];
+    bool areamatch = std::abs(area1) < std::abs(area2);
+    bool less_than = (nummatch && areamatch);
+    return less_than;
+}
+
+inline bool operator<=(const Interface &c1, const Interface &c2)
+{
+    bool nummatch = (c1.Stack.num_atom <= c2.Stack.num_atom);
+    double area1 = c1.Stack.lattice[0][0] * c1.Stack.lattice[1][1] - c1.Stack.lattice[0][1] * c1.Stack.lattice[1][0];
+    double area2 = c2.Stack.lattice[0][0] * c2.Stack.lattice[1][1] - c2.Stack.lattice[0][1] * c2.Stack.lattice[1][0];
+    bool areamatch = std::abs(area1) <= std::abs(area2);
+    bool less_than = (nummatch && areamatch);
+    return less_than;
+}

@@ -4,6 +4,7 @@
 #include <array>
 #include <map>
 #include <algorithm>
+#include <set>
 
 #include "spglib.h"
 
@@ -183,25 +184,8 @@ std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, std::map<
  */
 std::vector<Interface> filter_supercells(std::vector<Interface> &stacks)
 {
-    std::vector<Interface> filtered_stacks;
-    int1dvec_t indices;
-#pragma omp parallel for shared(stacks, indices) schedule(static) ordered collapse(1)
-    for (int i = 0; i < stacks.size(); i++)
-    {
-        for (int j = i + 1; j < stacks.size(); j++)
-        {
-            bool is_equal = (stacks[i] == (stacks[j]));
-            if (!is_equal)
-            {
-#pragma omp ordered
-                indices.push_back(i);
-            };
-        }
-    }
-    indices.erase(std::unique(indices.begin(), indices.end()), indices.end());
-    for (const auto &i : indices)
-    {
-        filtered_stacks.push_back(stacks[i]);
-    }
-    return filtered_stacks;
+    std::set<Interface> s(stacks.begin(), stacks.end());
+    std::vector<Interface> v(s.begin(), s.end());
+
+    return v;
 };

@@ -1,12 +1,11 @@
-#include "Python.h"
-#include "../../external/pybind11/include/pybind11/pybind11.h"
+#include <pybind11/pybind11.h>
 
 #include "coincidence_algorithm.h"
 #include "test.h"
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(coincidence_algorithm, m)
+PYBIND11_MODULE(hetbuilder_backend, m)
 {
     m.doc() = "backend c++ implementation"; // optional module docstring
     m.def("test_coincidence_algorithm", &test_coincidence_algorithm, "Test function");

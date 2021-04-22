@@ -5,6 +5,7 @@
 #include <array>
 #include <map>
 #include <algorithm>
+#include <set>
 
 #include "spglib.h"
 
