@@ -80,6 +80,30 @@ void log_number_of_threads()
 #endif
 };
 
+// Get number of OpenMP threads.
+int get_number_of_threads()
+{
+    int nthreads = 1;
+#ifdef _OPENMP
+    int tid;
+
+/* Fork a team of threads giving them their own copies of variables */
+#pragma omp parallel shared(nthreads, tid)
+    {
+        /* Obtain thread number */
+        tid = omp_get_thread_num();
+
+        /* Only master thread does this */
+        if (tid == 0)
+        {
+            nthreads = omp_get_num_threads();
+        }
+
+    } /* All threads join master thread and disband */
+#endif
+    return nthreads;
+};
+
 // Prints map of single-valued double key with a 2d vector of ints.
 void print_map_key_2d_vector(std::map<double, int2dvec_t> const &m)
 {

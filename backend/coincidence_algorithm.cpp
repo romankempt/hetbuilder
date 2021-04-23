@@ -17,13 +17,6 @@
 #include <omp.h>
 #endif
 
-using std::sin, std::cos, std::sqrt, std::pow, std::abs;
-
-typedef std::vector<int> int1dvec_t;
-typedef std::vector<double> double1dvec_t;
-typedef std::vector<std::vector<int>> int2dvec_t;
-typedef std::vector<std::vector<double>> double2dvec_t;
-
 /**
  * Solves the equation |Am - R(theta)Bn| < tolerance for a given angle theta.
  * 
@@ -37,8 +30,6 @@ int2dvec_t find_coincidences(const double2dvec_t &A, const double2dvec_t &B, con
 {
 
     int2dvec_t coincidences;
-    const int nCombinations = (int)pow((Nmax - Nmin + 1), 4);
-    std::cout << "Doing " << nCombinations << " combinations." << std::endl;
 
 #pragma omp parallel for default(none) shared(A, B, theta, Nmin, Nmax, tolerance, coincidences) schedule(static) ordered collapse(4)
     for (int i = Nmin; i < (Nmax + 1); i++)
@@ -146,7 +137,7 @@ int2dvec_t find_unique_pairs(int2dvec_t &coincidences)
  * 
  * Returns a vector of interfaces.
  */
-std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, std::map<double, int2dvec_t> &AnglesMN, double &weight, double &distance, const int &no_idealize, const double &symprec, const double &angle_tolerance)
+std::vector<Interface> build_all_supercells(const Atoms bottom, const Atoms top, std::map<double, int2dvec_t> &AnglesMN, double &weight, double &distance, const int &no_idealize, const double &symprec, const double &angle_tolerance)
 {
     std::vector<Interface> stacks;
     for (auto i = AnglesMN.begin(); i != AnglesMN.end(); ++i)
@@ -157,13 +148,18 @@ std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, std::map<
         for (int j = 0; j < pairs.size(); j++)
         {
             int1dvec_t row = pairs[j];
-            int2dvec_t M = {{row[0], row[1], 0}, {row[2], row[3], 0}, {0, 0, 1}};
-            int2dvec_t N = {{row[4], row[5], 0}, {row[6], row[7], 0}, {0, 0, 1}};
+            int2dvec_t M = {{row[0], row[1], 0},
+                            {row[2], row[3], 0},
+                            {0, 0, 1}};
+            int2dvec_t N = {{row[4], row[5], 0},
+                            {row[6], row[7], 0},
+                            {0, 0, 1}};
             Atoms bottomLayer = make_supercell(bottom, M);
             Atoms topLayer = make_supercell(top, N);
             Atoms topLayerRot = rotate_atoms_around_z(topLayer, theta);
             Atoms interface = stack_atoms(bottomLayer, topLayerRot, weight, distance);
-            int spacegroup = interface.standardize(1, no_idealize, symprec, angle_tolerance);
+            int spacegroup = 1;
+            //int spacegroup = interface.standardize(1, no_idealize, symprec, angle_tolerance);
             if (spacegroup != 0)
             {
                 Interface stack(bottomLayer, topLayerRot, interface, theta, M, N, spacegroup);

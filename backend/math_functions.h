@@ -2,6 +2,8 @@
 #include <vector>
 #include <array>
 
+typedef std::vector<int> int1dvec_t;
+typedef std::vector<double> double1dvec_t;
 typedef std::vector<std::vector<int>> int2dvec_t;
 typedef std::vector<std::vector<double>> double2dvec_t;
 
@@ -11,7 +13,7 @@ std::vector<T1> basis_2x2_dot_2d_vector(const std::vector<std::vector<T1>> &basi
 
 // Function to rotate vector(2) by angle theta in degrees
 template <typename T>
-std::vector<double> rotate_2d_vector(std::vector<T> &vec, const double &theta);
+double1dvec_t rotate_2d_vector(std::vector<T> &vec, const double &theta);
 
 // Returns distance |Am - RBn|
 template <typename T>
@@ -37,7 +39,7 @@ double get_3x3_matrix_determinant(std::vector<std::vector<T>> &mat);
 
 // Function to get inverse of 3x3 matrix
 template <typename T>
-std::vector<std::vector<double>> invert_3x3_matrix(std::vector<std::vector<T>> &mat);
+double2dvec_t invert_3x3_matrix(std::vector<std::vector<T>> &mat);
 
 /**
 * This function multiplies two 3x3 matrices and returns a 3x3 matrix.

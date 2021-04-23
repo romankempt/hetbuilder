@@ -1,4 +1,18 @@
+#include "atom_class.h"
 #include "coincidence_algorithm.h"
+
+Atoms test_atom_binding()
+{
+    double2dvec_t latticeA = {{4, 1, 0}, {1, 4, 0}, {0, 0, 4}};
+    double2dvec_t positions = {
+        {0, 0, 0},
+        {0.5, 0.5, 0.5}};
+    int1dvec_t atomic_numbers = {1, 1};
+    int num_atom = 2;
+
+    Atoms bottom(latticeA, positions, atomic_numbers);
+    return bottom;
+};
 
 int test_coincidence_algorithm()
 {
@@ -63,7 +77,7 @@ int test_coincidence_algorithm()
     std::cout << "filtered stacks size: " << fstacks.size() << std::endl;
     for (int i = 0; i < fstacks.size(); i++)
     {
-        Atoms example = fstacks[i].Stack;
+        Atoms example = fstacks[i].stack;
         print_2d_vector(example.lattice);
         std::cout << std::endl;
     }

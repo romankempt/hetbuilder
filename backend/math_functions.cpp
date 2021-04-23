@@ -29,9 +29,9 @@ template double1dvec_t basis_2x2_dot_2d_vector<double, double>(const double2dvec
 
 // Function to rotate vector(2) by angle theta in degrees
 template <typename T>
-std::vector<double> rotate_2d_vector(std::vector<T> &vec, const double &theta)
+double1dvec_t rotate_2d_vector(std::vector<T> &vec, const double &theta)
 {
-    std::vector<double> result = {0.0, 0.0};
+    double1dvec_t result = {0.0, 0.0};
     double t = theta * M_PI / 180.0;
     double R[2][2] = {{cos(t), -sin(t)}, {sin(t), cos(t)}};
     result[0] = R[0][0] * vec[0] + R[0][1] * vec[1];

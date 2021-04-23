@@ -105,6 +105,8 @@ setup(
         "networkx",
         "cmake",
         "pybind11",
+        "pretty_errors",
+        "rich",
     ],
     classifiers=[
         "License :: OSI Approved :: MIT license",

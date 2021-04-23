@@ -10,11 +10,6 @@
 
 using std::sin, std::cos, std::sqrt, std::pow, std::abs;
 
-typedef std::vector<int> int1dvec_t;
-typedef std::vector<double> double1dvec_t;
-typedef std::vector<std::vector<int>> int2dvec_t;
-typedef std::vector<std::vector<double>> double2dvec_t;
-
 /**
  * Find all lattice points contained in a supercell.
 
@@ -22,7 +17,7 @@ typedef std::vector<std::vector<double>> double2dvec_t;
     The MIT License (MIT) Copyright (c) 2011-2012 MIT & The Regents of the
     University of California, through Lawrence Berkeley National Laboratory
  */
-double2dvec_t lattice_points_in_supercell(int2dvec_t &SuperCellMatrix)
+double2dvec_t lattice_points_in_supercell(int2dvec_t &superCellMatrix)
 {
     int2dvec_t diagonals = {{0, 0, 0},
                             {0, 0, 1},
@@ -36,32 +31,32 @@ double2dvec_t lattice_points_in_supercell(int2dvec_t &SuperCellMatrix)
     int1dvec_t dotproduct;
     for (int row = 0; row < diagonals.size(); row++)
     {
-        dotproduct = vec1x3_dot_3x3_matrix<int, int>(diagonals[row], SuperCellMatrix);
+        dotproduct = vec1x3_dot_3x3_matrix<int, int>(diagonals[row], superCellMatrix);
         dpoints.push_back(dotproduct);
     }
 
-    int k = dpoints.size() - 1;
-    int1dvec_t mins = dpoints[0];
-    int1dvec_t maxes = dpoints[k];
+    int1dvec_t mins = {0, 0, 0};
+    int1dvec_t maxes = {0, 0, 0};
 
-    int minrowsum = dpoints[0][0] + dpoints[0][1] + dpoints[0][2];
-    int maxrowsum = dpoints[k][0] + dpoints[k][1] + dpoints[k][2];
-    int rowsum;
     for (int row = 0; row < dpoints.size(); row++)
     {
-        rowsum = dpoints[row][0] + dpoints[row][1] + dpoints[row][2];
-        if (rowsum < minrowsum)
+        for (int j = 0; j < 3; j++)
         {
-            mins = dpoints[row];
-        }
-        if (rowsum > maxrowsum)
-        {
-            maxes = dpoints[row];
+            if (dpoints[row][j] < mins[j])
+            {
+                mins[j] = dpoints[row][j];
+            }
+            if (dpoints[row][j] > maxes[j])
+            {
+                maxes[j] = dpoints[row][j];
+            }
         }
     }
+    maxes = {maxes[0] + 1, maxes[1] + 1, maxes[2] + 1};
 
     int2dvec_t ar, br, cr;
     int1dvec_t subvec(3, 0);
+
     for (int a = mins[0]; a < maxes[0]; a++)
     {
         subvec = {a, 0, 0};
@@ -101,13 +96,13 @@ double2dvec_t lattice_points_in_supercell(int2dvec_t &SuperCellMatrix)
         allpoints_double.push_back(doubleVec);
     };
 
-    double determinant = get_3x3_matrix_determinant<int>(SuperCellMatrix);
-    double2dvec_t InvSuperCellMatrix = invert_3x3_matrix<int>(SuperCellMatrix);
+    double determinant = get_3x3_matrix_determinant<int>(superCellMatrix);
+    double2dvec_t invSuperCellMatrix = invert_3x3_matrix<int>(superCellMatrix);
     double2dvec_t fracpoints;
     std::vector<double> dp;
     for (int row = 0; row < allpoints.size(); row++)
     {
-        dp = vec1x3_dot_3x3_matrix<double, double>(allpoints_double[row], InvSuperCellMatrix);
+        dp = vec1x3_dot_3x3_matrix<double, double>(allpoints_double[row], invSuperCellMatrix);
         fracpoints.push_back(dp);
     }
 
@@ -128,7 +123,7 @@ double2dvec_t lattice_points_in_supercell(int2dvec_t &SuperCellMatrix)
     try
     {
         int detsize = (int)determinant;
-        if (detsize != determinant)
+        if (detsize != tvects.size())
         {
             throw "Determinant of supercell does not match number of lattice points.";
         }
@@ -146,11 +141,11 @@ double2dvec_t lattice_points_in_supercell(int2dvec_t &SuperCellMatrix)
  * Generate a supercell by applying a SuperCellMatrix to
     the input atomic configuration prim.
 */
-Atoms make_supercell(Atoms &prim, int2dvec_t &SuperCellMatrix)
+Atoms make_supercell(const Atoms prim, int2dvec_t &superCellMatrix)
 {
-    double2dvec_t fracpoints = lattice_points_in_supercell(SuperCellMatrix);
+    double2dvec_t fracpoints = lattice_points_in_supercell(superCellMatrix);
     double2dvec_t cell = prim.lattice;
-    double2dvec_t supercell = matrix3x3_dot_matrix3x3<int, double>(SuperCellMatrix, cell);
+    double2dvec_t supercell = matrix3x3_dot_matrix3x3<int, double>(superCellMatrix, cell);
 
     double2dvec_t lattice_points;
     double1dvec_t dotproduct;
@@ -161,19 +156,16 @@ Atoms make_supercell(Atoms &prim, int2dvec_t &SuperCellMatrix)
     }
 
     double2dvec_t new_positions = prim.positions;
+
     int1dvec_t new_numbers = prim.atomic_numbers;
-    int1dvec_t new_spin = prim.spins;
-    int1dvec_t new_equiv = prim.equivalent_atoms;
-    for (int i = 0; i < prim.num_atom; i++)
+    for (int i = 0; i < prim.numAtom; i++)
     {
         double1dvec_t atom_pos = prim.positions[i];
         int number = prim.atomic_numbers[i];
-        int spin = prim.spins[i];
-        int equivalent = prim.equivalent_atoms[i];
         for (int row = 0; row < lattice_points.size(); row++)
         {
             double1dvec_t lp = lattice_points[row];
-            if (!((lp[0] == 0) && (lp[1] == 0) && (lp[2] == 0)))
+            if ((std::abs(lp[0]) + std::abs(lp[1]) + std::abs(lp[2])) > 1e-6)
             {
                 for (int k = 0; k < 3; k++)
                 {
@@ -181,12 +173,10 @@ Atoms make_supercell(Atoms &prim, int2dvec_t &SuperCellMatrix)
                 }
                 new_positions.push_back(lp);
                 new_numbers.push_back(number);
-                new_spin.push_back(spin);
-                new_equiv.push_back(equivalent);
             }
         }
     }
-    Atoms superatoms = {supercell, new_positions, new_numbers, new_spin, new_equiv};
+    Atoms superatoms = {supercell, new_positions, new_numbers};
     return superatoms;
 };
 
@@ -198,11 +188,11 @@ Atoms rotate_atoms_around_z(Atoms &atoms, const double &theta)
     double2dvec_t R = {{c, -s, 0}, {s, c, 0}, {0, 0, 1}};
 
     double2dvec_t positions = atoms.positions;
-    double2dvec_t rotpositions;
+    double2dvec_t rotPositions;
     for (int row = 0; row < positions.size(); row++)
     {
-        std::vector<double> vec = positions[row];
-        std::vector<double> rotvec = {0.0, 0.0, 0.0};
+        double1dvec_t vec = positions[row];
+        double1dvec_t rotvec = {0.0, 0.0, 0.0};
         for (int i = 0; i < 3; i++)
         {
             for (int j = 0; j < 3; j++)
@@ -210,14 +200,14 @@ Atoms rotate_atoms_around_z(Atoms &atoms, const double &theta)
                 rotvec[i] += (R[i][j] * vec[j]);
             }
         }
-        rotpositions.push_back(rotvec);
+        rotPositions.push_back(rotvec);
     }
 
-    double2dvec_t tcell = transpose_matrix3x3<double>(atoms.lattice);
-    double2dvec_t rotcelltranspose = matrix3x3_dot_matrix3x3(R, tcell);
-    double2dvec_t rotcell = transpose_matrix3x3<double>(rotcelltranspose);
+    double2dvec_t tCell = transpose_matrix3x3<double>(atoms.lattice);
+    double2dvec_t rotCellTranspose = matrix3x3_dot_matrix3x3(R, tCell);
+    double2dvec_t rotCell = transpose_matrix3x3<double>(rotCellTranspose);
 
-    Atoms rotatoms(rotcell, rotpositions, atoms.atomic_numbers, atoms.spins, atoms.equivalent_atoms);
+    Atoms rotatoms(rotCell, rotPositions, atoms.atomic_numbers);
     return rotatoms;
 };
 
@@ -225,7 +215,7 @@ void translate_atoms_z(Atoms &atoms, const double shift)
 {
     double2dvec_t pos1 = atoms.positions;
     double2dvec_t new_pos;
-    for (int row = 0; row < atoms.num_atom; row++)
+    for (int row = 0; row < atoms.numAtom; row++)
     {
         double1dvec_t subvec = {pos1[row][0],
                                 pos1[row][1],
@@ -238,8 +228,8 @@ void translate_atoms_z(Atoms &atoms, const double shift)
 std::tuple<double, double> get_min_max_z(Atoms &atoms)
 {
     double min_z = atoms.positions[0][2];
-    double max_z = atoms.positions[atoms.num_atom - 1][2];
-    for (int row = 0; row < atoms.num_atom; row++)
+    double max_z = atoms.positions[atoms.numAtom - 1][2];
+    for (int row = 0; row < atoms.numAtom; row++)
     {
         double z = atoms.positions[row][2];
         if (z < min_z)

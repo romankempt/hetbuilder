@@ -19,39 +19,16 @@ public:
     double2dvec_t lattice;
     double2dvec_t positions;
     int1dvec_t atomic_numbers;
-    int num_atom;
-    int1dvec_t spins;
-    int1dvec_t equivalent_atoms;
+    int numAtom;
 
-    Atoms(double2dvec_t Lattice = {},
-          double2dvec_t Positions = {},
-          int1dvec_t AtomicNumbers = {},
-          int1dvec_t Spins = {},
-          int1dvec_t EquivalentAtoms = {})
+    Atoms(double2dvec_t cLattice = {},
+          double2dvec_t cPositions = {},
+          int1dvec_t cAtomicNumbers = {})
     {
-        lattice = Lattice;
-        positions = Positions;
-        atomic_numbers = AtomicNumbers;
-        if (Spins.size() == 0)
-        {
-            int1dvec_t default_spins(AtomicNumbers.size(), 1);
-            spins = default_spins;
-        }
-        else
-        {
-            spins = Spins;
-        }
-        if (EquivalentAtoms.size() == 0)
-        {
-            int1dvec_t default_equivs(AtomicNumbers.size(), 1);
-            equivalent_atoms = default_equivs;
-        }
-        else
-        {
-            equivalent_atoms = EquivalentAtoms;
-        }
-
-        num_atom = atomic_numbers.size();
+        lattice = cLattice;
+        positions = cPositions;
+        atomic_numbers = cAtomicNumbers;
+        numAtom = atomic_numbers.size();
     };
 
     void print()
@@ -63,12 +40,7 @@ public:
         std::cout << "Scaled Positions: " << std::endl;
         double2dvec_t scalpos = get_scaled_positions();
         print_2d_vector(scalpos);
-        std::cout << "Atomic numbers: " << std::endl;
-        print_1d_vector(atomic_numbers);
-        std::cout << "Atomic spins: " << std::endl;
-        print_1d_vector(spins);
-        std::cout << "Atomic equivalencies: " << std::endl;
-        print_1d_vector(equivalent_atoms);
+        std::cout << "Atomic Numbers: " << std::endl;
         std::cout << std::endl;
     };
 
@@ -76,10 +48,11 @@ public:
     {
         double2dvec_t cell = this->lattice;
         double2dvec_t icell = invert_3x3_matrix(cell);
+        double2dvec_t icellT = transpose_matrix3x3(icell);
         double2dvec_t scaled_positions;
-        for (int row = 0; row < positions.size(); row++)
+        for (int row = 0; row < this->positions.size(); row++)
         {
-            double1dvec_t subvec = matrix3x3_dot_vec3x1(icell, positions[row]);
+            double1dvec_t subvec = matrix3x3_dot_vec3x1(icellT, this->positions[row]);
             scaled_positions.push_back(subvec);
         }
         return scaled_positions;
@@ -99,9 +72,9 @@ public:
 
     void scale_cell(double2dvec_t &newcell)
     {
-        double2dvec_t scal_pos = get_scaled_positions();
+        double2dvec_t scal_pos = this->get_scaled_positions();
         this->lattice = newcell;
-        double2dvec_t cart_pos = scaled_positions_to_cartesian(scal_pos);
+        double2dvec_t cart_pos = this->scaled_positions_to_cartesian(scal_pos);
         this->positions = cart_pos;
     };
 
@@ -111,24 +84,20 @@ public:
         double2dvec_t pos1 = this->positions;
         double2dvec_t cell1 = this->lattice;
         int1dvec_t numbers1 = this->atomic_numbers;
-        int1dvec_t spins1 = this->spins;
-        int1dvec_t equiv1 = this->equivalent_atoms;
 
-        for (int row = 0; row < b.num_atom; row++)
+        for (int row = 0; row < b.numAtom; row++)
         {
             pos1.push_back(b.positions[row]);
             numbers1.push_back(b.atomic_numbers[row]);
-            spins1.push_back(b.spins[row]);
-            equiv1.push_back(b.equivalent_atoms[row]);
         }
 
-        Atoms newAtoms(cell1, pos1, numbers1, spins1, equiv1);
+        Atoms newAtoms(cell1, pos1, numbers1);
         return newAtoms;
     };
 
     void lattice_to_spglib_array(double arr[3][3])
     {
-        // note that the spglib lattice basis is transposed
+        // transposition
         for (unsigned i = 0; (i < 3); i++)
         {
             for (unsigned j = 0; (j < 3); j++)
@@ -140,7 +109,7 @@ public:
 
     void positions_to_spglib_array(double arr[][3])
     {
-        double2dvec_t scalpos = get_scaled_positions();
+        double2dvec_t scalpos = this->get_scaled_positions();
         for (unsigned i = 0; i < scalpos.size(); i++)
         {
             for (unsigned j = 0; (j < 3); j++)
@@ -152,9 +121,9 @@ public:
 
     void atomic_numbers_to_spglib_types(int arr[])
     {
-        for (unsigned i = 0; (i < num_atom); i++)
+        for (unsigned i = 0; (i < this->numAtom); i++)
         {
-            arr[i] = atomic_numbers[i];
+            arr[i] = this->atomic_numbers[i];
         }
     };
 
@@ -162,30 +131,31 @@ public:
     {
         double spglibBasis[3][3];
         lattice_to_spglib_array(spglibBasis);
-        double spglibPos[num_atom][3];
+        double spglibPos[this->numAtom][3];
         positions_to_spglib_array(spglibPos);
-        int spglibTypes[num_atom];
+        int spglibTypes[this->numAtom];
         atomic_numbers_to_spglib_types(spglibTypes);
 
         int success = spgat_standardize_cell(spglibBasis,
                                              spglibPos,
                                              spglibTypes,
-                                             num_atom,
+                                             this->numAtom,
                                              to_primitive,
                                              no_idealize,
                                              symprec,
                                              angle_tolerance);
-        int spacegroup;
+        int spaceGroup;
         char symbol[11];
-        spacegroup = spgat_get_international(symbol,
+        spaceGroup = spgat_get_international(symbol,
                                              spglibBasis,
                                              spglibPos,
                                              spglibTypes,
-                                             num_atom,
+                                             this->numAtom,
                                              symprec,
                                              angle_tolerance);
         if (success != 0)
         {
+            // transposition
             for (unsigned i = 0; (i < 3); i++)
             {
                 for (unsigned j = 0; (j < 3); j++)
@@ -194,10 +164,10 @@ public:
                 }
             }
             int arrSize = sizeof(spglibPos) / sizeof(spglibPos[0]);
-            this->num_atom = arrSize;
+            this->numAtom = arrSize;
             double2dvec_t spglibScalPos;
-            int1dvec_t spglibNewTypes(num_atom, 0);
-            for (unsigned i = 0; (i < num_atom); i++)
+            int1dvec_t spglibNewTypes(this->numAtom, 0);
+            for (unsigned i = 0; (i < this->numAtom); i++)
             {
                 double1dvec_t subvec = {spglibPos[i][0], spglibPos[i][1], spglibPos[i][2]};
                 spglibScalPos.push_back(subvec);
@@ -209,20 +179,20 @@ public:
             this->atomic_numbers = spglibNewTypes;
         }
 
-        return spacegroup;
+        return spaceGroup;
     }
 };
 
 class Interface
 {
 public:
-    Atoms BottomLayer;
-    Atoms TopLayer;
-    Atoms Stack;
-    double Angle;
+    Atoms bottomLayer;
+    Atoms topLayer;
+    Atoms stack;
+    double angle;
     int2dvec_t M;
     int2dvec_t N;
-    int SpaceGroup;
+    int spaceGroup;
 
     friend bool operator==(const Interface &c1, const Interface &c2);
     friend bool operator>(const Interface &c1, const Interface &c2);
@@ -230,30 +200,30 @@ public:
     friend bool operator<(const Interface &c1, const Interface &c2);
     friend bool operator<=(const Interface &c1, const Interface &c2);
 
-    Interface(Atoms bottomLayer,
-              Atoms topLayer,
-              Atoms stack,
-              double angle,
-              int2dvec_t MatrixM,
-              int2dvec_t MatrixN,
-              int spaceGroup)
+    Interface(Atoms cBottomLayer,
+              Atoms cTopLayer,
+              Atoms cStack,
+              double cAngle,
+              int2dvec_t cMatrixM,
+              int2dvec_t cMatrixN,
+              int cSpaceGroup)
     {
-        BottomLayer = bottomLayer;
-        TopLayer = topLayer;
-        Stack = stack;
-        Angle = angle;
-        M = MatrixM;
-        N = MatrixN;
-        SpaceGroup = spaceGroup;
+        bottomLayer = cBottomLayer;
+        topLayer = cTopLayer;
+        stack = cStack;
+        angle = cAngle;
+        M = cMatrixM;
+        N = cMatrixN;
+        spaceGroup = cSpaceGroup;
     };
 };
 
 inline bool operator==(const Interface &c1, const Interface &c2)
 {
-    bool spgmatch = (c1.SpaceGroup == c2.SpaceGroup);
-    bool nummatch = (c1.Stack.num_atom == c2.Stack.num_atom);
-    double area1 = c1.Stack.lattice[0][0] * c1.Stack.lattice[1][1] - c1.Stack.lattice[0][1] * c1.Stack.lattice[1][0];
-    double area2 = c2.Stack.lattice[0][0] * c2.Stack.lattice[1][1] - c2.Stack.lattice[0][1] * c2.Stack.lattice[1][0];
+    bool spgmatch = (c1.spaceGroup == c2.spaceGroup);
+    bool nummatch = (c1.stack.numAtom == c2.stack.numAtom);
+    double area1 = c1.stack.lattice[0][0] * c1.stack.lattice[1][1] - c1.stack.lattice[0][1] * c1.stack.lattice[1][0];
+    double area2 = c2.stack.lattice[0][0] * c2.stack.lattice[1][1] - c2.stack.lattice[0][1] * c2.stack.lattice[1][0];
     bool areamatch = std::abs(std::abs(area1) - std::abs(area2)) < 1e-6;
     bool equals = (spgmatch && nummatch && areamatch);
     return equals;
@@ -261,9 +231,9 @@ inline bool operator==(const Interface &c1, const Interface &c2)
 
 inline bool operator>(const Interface &c1, const Interface &c2)
 {
-    bool nummatch = (c1.Stack.num_atom > c2.Stack.num_atom);
-    double area1 = c1.Stack.lattice[0][0] * c1.Stack.lattice[1][1] - c1.Stack.lattice[0][1] * c1.Stack.lattice[1][0];
-    double area2 = c2.Stack.lattice[0][0] * c2.Stack.lattice[1][1] - c2.Stack.lattice[0][1] * c2.Stack.lattice[1][0];
+    bool nummatch = (c1.stack.numAtom > c2.stack.numAtom);
+    double area1 = c1.stack.lattice[0][0] * c1.stack.lattice[1][1] - c1.stack.lattice[0][1] * c1.stack.lattice[1][0];
+    double area2 = c2.stack.lattice[0][0] * c2.stack.lattice[1][1] - c2.stack.lattice[0][1] * c2.stack.lattice[1][0];
     bool areamatch = std::abs(area1) > std::abs(area2);
     bool greater_than = (nummatch && areamatch);
     return greater_than;
@@ -271,9 +241,9 @@ inline bool operator>(const Interface &c1, const Interface &c2)
 
 inline bool operator>=(const Interface &c1, const Interface &c2)
 {
-    bool nummatch = (c1.Stack.num_atom >= c2.Stack.num_atom);
-    double area1 = c1.Stack.lattice[0][0] * c1.Stack.lattice[1][1] - c1.Stack.lattice[0][1] * c1.Stack.lattice[1][0];
-    double area2 = c2.Stack.lattice[0][0] * c2.Stack.lattice[1][1] - c2.Stack.lattice[0][1] * c2.Stack.lattice[1][0];
+    bool nummatch = (c1.stack.numAtom >= c2.stack.numAtom);
+    double area1 = c1.stack.lattice[0][0] * c1.stack.lattice[1][1] - c1.stack.lattice[0][1] * c1.stack.lattice[1][0];
+    double area2 = c2.stack.lattice[0][0] * c2.stack.lattice[1][1] - c2.stack.lattice[0][1] * c2.stack.lattice[1][0];
     bool areamatch = std::abs(area1) >= std::abs(area2);
     bool greater_than = (nummatch && areamatch);
     return greater_than;
@@ -281,9 +251,9 @@ inline bool operator>=(const Interface &c1, const Interface &c2)
 
 inline bool operator<(const Interface &c1, const Interface &c2)
 {
-    bool nummatch = (c1.Stack.num_atom < c2.Stack.num_atom);
-    double area1 = c1.Stack.lattice[0][0] * c1.Stack.lattice[1][1] - c1.Stack.lattice[0][1] * c1.Stack.lattice[1][0];
-    double area2 = c2.Stack.lattice[0][0] * c2.Stack.lattice[1][1] - c2.Stack.lattice[0][1] * c2.Stack.lattice[1][0];
+    bool nummatch = (c1.stack.numAtom < c2.stack.numAtom);
+    double area1 = c1.stack.lattice[0][0] * c1.stack.lattice[1][1] - c1.stack.lattice[0][1] * c1.stack.lattice[1][0];
+    double area2 = c2.stack.lattice[0][0] * c2.stack.lattice[1][1] - c2.stack.lattice[0][1] * c2.stack.lattice[1][0];
     bool areamatch = std::abs(area1) < std::abs(area2);
     bool less_than = (nummatch && areamatch);
     return less_than;
@@ -291,9 +261,9 @@ inline bool operator<(const Interface &c1, const Interface &c2)
 
 inline bool operator<=(const Interface &c1, const Interface &c2)
 {
-    bool nummatch = (c1.Stack.num_atom <= c2.Stack.num_atom);
-    double area1 = c1.Stack.lattice[0][0] * c1.Stack.lattice[1][1] - c1.Stack.lattice[0][1] * c1.Stack.lattice[1][0];
-    double area2 = c2.Stack.lattice[0][0] * c2.Stack.lattice[1][1] - c2.Stack.lattice[0][1] * c2.Stack.lattice[1][0];
+    bool nummatch = (c1.stack.numAtom <= c2.stack.numAtom);
+    double area1 = c1.stack.lattice[0][0] * c1.stack.lattice[1][1] - c1.stack.lattice[0][1] * c1.stack.lattice[1][0];
+    double area2 = c2.stack.lattice[0][0] * c2.stack.lattice[1][1] - c2.stack.lattice[0][1] * c2.stack.lattice[1][0];
     bool areamatch = std::abs(area1) <= std::abs(area2);
     bool less_than = (nummatch && areamatch);
     return less_than;

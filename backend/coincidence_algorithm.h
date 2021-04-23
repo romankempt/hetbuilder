@@ -14,13 +14,6 @@
 #include "atom_class.h"
 #include "atom_functions.h"
 
-using std::sin, std::cos, std::sqrt, std::pow, std::abs;
-
-typedef std::vector<int> int1dvec_t;
-typedef std::vector<double> double1dvec_t;
-typedef std::vector<std::vector<int>> int2dvec_t;
-typedef std::vector<std::vector<double>> double2dvec_t;
-
 /**
  * Solves the equation |Am - R(theta)Bn| < tolerance for a given angle theta.
  * 
@@ -51,7 +44,7 @@ int2dvec_t find_unique_pairs(int2dvec_t &coincidences);
  * 
  * Returns a vector of interfaces.
  */
-std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, std::map<double, int2dvec_t> &AnglesMN, double &weight, double &distance, const int &no_idealize, const double &symprec, const double &angle_tolerance);
+std::vector<Interface> build_all_supercells(const Atoms bottom, const Atoms top, std::map<double, int2dvec_t> &AnglesMN, double &weight, double &distance, const int &no_idealize, const double &symprec, const double &angle_tolerance);
 
 /**
  * Filters the interfaces.
@@ -61,3 +54,102 @@ std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, std::map<
  * Returns a vector of interfaces.
  */
 std::vector<Interface> filter_supercells(std::vector<Interface> &stacks);
+
+/**
+ * Class definition of the lattice coincidence algorithm.
+ * 
+ * Executed by the run() method.
+ */
+class CoincidenceAlgorithm
+{
+public:
+    Atoms primitive_bottom;
+    Atoms primitive_top;
+    int Nmax;
+    int Nmin;
+    double1dvec_t angles;
+    double tolerance;
+    double weight;
+    double distance;
+    int no_idealize;
+    double symprec;
+    double angle_tolerance;
+
+    CoincidenceAlgorithm(Atoms cPrimitiveBottom,
+                         Atoms cPrimitiveTop,
+                         int cNmax = 10,
+                         int cNmin = -10,
+                         double1dvec_t cAngles = {0.0, 30.0, 60.0, 90.0},
+                         double cTolerance = 0.01,
+                         double cWeight = 0.5,
+                         double cDistance = 4.0,
+                         int cNoIdealize = 0,
+                         double cSymPrec = 1e-5,
+                         double cAngleTolerance = 5.0)
+    {
+        primitive_bottom = cPrimitiveBottom;
+        primitive_top = cPrimitiveTop;
+        Nmax = cNmax;
+        Nmin = cNmin;
+        angles = cAngles;
+        tolerance = cTolerance;
+        weight = cWeight;
+        distance = cDistance;
+        no_idealize = cNoIdealize;
+        symprec = cSymPrec;
+        angle_tolerance = cAngleTolerance;
+    };
+
+    std::vector<Interface> run()
+    {
+        int2dvec_t coincidences;
+        std::map<double, int2dvec_t> AnglesMN;
+
+        // basis is transposed
+        double2dvec_t basisA = {{this->primitive_bottom.lattice[0][0], this->primitive_bottom.lattice[1][0]}, {this->primitive_bottom.lattice[0][1], this->primitive_bottom.lattice[1][1]}};
+        double2dvec_t basisB = {{this->primitive_top.lattice[0][0], this->primitive_top.lattice[1][0]}, {this->primitive_top.lattice[0][1], this->primitive_top.lattice[1][1]}};
+
+        //const int nCombinations = (int)pow((Nmax - Nmin + 1), 4) * angles.size();
+
+        for (int i = 0; i < this->angles.size(); i++)
+        {
+            double theta = this->angles[i];
+            coincidences = find_coincidences(basisA, basisB, theta, Nmin, Nmax, tolerance);
+            if (coincidences.size() > 0)
+            {
+                int2dvec_t uniquePairs;
+                uniquePairs = find_unique_pairs(coincidences);
+                if (uniquePairs.size() > 0)
+                {
+                    AnglesMN.insert(std::make_pair(theta, uniquePairs));
+                }
+            };
+        };
+
+        std::vector<Interface> stacks;
+        if (AnglesMN.size() > 0)
+        {
+            stacks = build_all_supercells(this->primitive_bottom,
+                                          this->primitive_top,
+                                          AnglesMN,
+                                          this->weight,
+                                          this->distance,
+                                          this->no_idealize,
+                                          this->symprec,
+                                          this->angle_tolerance);
+        }
+        else
+        {
+            std::cerr << "Could not find any coincidence pairs." << std::endl;
+            return {};
+        }
+
+        std::vector<Interface> fstacks;
+        if (stacks.size() > 0)
+        {
+            fstacks = filter_supercells(stacks);
+        }
+
+        return fstacks;
+    };
+};
