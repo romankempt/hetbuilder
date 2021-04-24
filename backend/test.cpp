@@ -42,9 +42,9 @@ int test_coincidence_algorithm()
     double tolerance = 0.01;
     double weight = 0.5;
     double distance = 4.0;
-    const int no_idealize = 0;
-    const double symprec = 1e-5;
-    const double angle_tolerance = 5.0;
+    int no_idealize = 0;
+    double symprec = 1e-5;
+    double angle_tolerance = 5.0;
 
     //SpglibSpacegroupType spg_get_spacegroup_type(const int hall_number)
 

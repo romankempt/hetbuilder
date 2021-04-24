@@ -141,7 +141,7 @@ double2dvec_t lattice_points_in_supercell(int2dvec_t &superCellMatrix)
  * Generate a supercell by applying a SuperCellMatrix to
     the input atomic configuration prim.
 */
-Atoms make_supercell(const Atoms prim, int2dvec_t &superCellMatrix)
+Atoms make_supercell(Atoms &prim, int2dvec_t &superCellMatrix)
 {
     double2dvec_t fracpoints = lattice_points_in_supercell(superCellMatrix);
     double2dvec_t cell = prim.lattice;
@@ -180,7 +180,7 @@ Atoms make_supercell(const Atoms prim, int2dvec_t &superCellMatrix)
     return superatoms;
 };
 
-Atoms rotate_atoms_around_z(Atoms &atoms, const double &theta)
+Atoms rotate_atoms_around_z(Atoms &atoms, double &theta)
 {
     double t = M_PI * theta / 180.0;
     double c = std::cos(t);
@@ -211,7 +211,7 @@ Atoms rotate_atoms_around_z(Atoms &atoms, const double &theta)
     return rotatoms;
 };
 
-void translate_atoms_z(Atoms &atoms, const double shift)
+void translate_atoms_z(Atoms &atoms, double shift)
 {
     double2dvec_t pos1 = atoms.positions;
     double2dvec_t new_pos;

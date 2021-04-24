@@ -34,13 +34,17 @@ public:
     void print()
     {
         std::cout << "Lattice: " << std::endl;
-        print_2d_vector(lattice);
+        print_2d_vector(this->lattice);
         std::cout << "Positions: " << std::endl;
-        print_2d_vector(positions);
+        print_2d_vector(this->positions);
         std::cout << "Scaled Positions: " << std::endl;
         double2dvec_t scalpos = get_scaled_positions();
         print_2d_vector(scalpos);
         std::cout << "Atomic Numbers: " << std::endl;
+        for (auto j : this->atomic_numbers)
+        {
+            std::cout << j << " ";
+        }
         std::cout << std::endl;
     };
 
@@ -64,7 +68,7 @@ public:
         double2dvec_t cart_pos;
         for (int row = 0; row < scalpos.size(); row++)
         {
-            double1dvec_t subvec = matrix3x3_dot_vec3x1(cell, scalpos[row]);
+            double1dvec_t subvec = vec1x3_dot_3x3_matrix(scalpos[row], cell);
             cart_pos.push_back(subvec);
         }
         return cart_pos;
@@ -127,7 +131,7 @@ public:
         }
     };
 
-    int standardize(const int to_primitive = 1, const int no_idealize = 0, const double symprec = 1e-5, const double angle_tolerance = 5.0)
+    int standardize(int to_primitive = 1, int no_idealize = 0, double symprec = 1e-5, double angle_tolerance = 5.0)
     {
         double spglibBasis[3][3];
         lattice_to_spglib_array(spglibBasis);

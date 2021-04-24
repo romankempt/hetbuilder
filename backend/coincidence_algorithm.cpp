@@ -26,7 +26,7 @@
  * 
  * The case of m1 = m2 = n1 = n2 is already removed, including the null vector.
  */
-int2dvec_t find_coincidences(const double2dvec_t &A, const double2dvec_t &B, const double &theta, const int &Nmin, const int &Nmax, const double &tolerance)
+int2dvec_t find_coincidences(double2dvec_t &A, double2dvec_t &B, double &theta, int &Nmin, int &Nmax, double &tolerance)
 {
 
     int2dvec_t coincidences;
@@ -137,14 +137,15 @@ int2dvec_t find_unique_pairs(int2dvec_t &coincidences)
  * 
  * Returns a vector of interfaces.
  */
-std::vector<Interface> build_all_supercells(const Atoms bottom, const Atoms top, std::map<double, int2dvec_t> &AnglesMN, double &weight, double &distance, const int &no_idealize, const double &symprec, const double &angle_tolerance)
+std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, std::map<double, int2dvec_t> &AnglesMN,
+                                            double &weight, double &distance, int &no_idealize, double &symprec, double &angle_tolerance)
 {
     std::vector<Interface> stacks;
     for (auto i = AnglesMN.begin(); i != AnglesMN.end(); ++i)
     {
         double theta = (*i).first;
         int2dvec_t pairs = (*i).second;
-#pragma omp parallel for shared(stacks, AnglesMN, theta, pairs) schedule(static) ordered collapse(1)
+#pragma omp parallel for shared(bottom, top, stacks, AnglesMN, theta, pairs) schedule(static) ordered collapse(1)
         for (int j = 0; j < pairs.size(); j++)
         {
             int1dvec_t row = pairs[j];
@@ -158,8 +159,8 @@ std::vector<Interface> build_all_supercells(const Atoms bottom, const Atoms top,
             Atoms topLayer = make_supercell(top, N);
             Atoms topLayerRot = rotate_atoms_around_z(topLayer, theta);
             Atoms interface = stack_atoms(bottomLayer, topLayerRot, weight, distance);
-            int spacegroup = 1;
-            //int spacegroup = interface.standardize(1, no_idealize, symprec, angle_tolerance);
+            int spacegroup = interface.standardize(1, no_idealize, symprec, angle_tolerance);
+
             if (spacegroup != 0)
             {
                 Interface stack(bottomLayer, topLayerRot, interface, theta, M, N, spacegroup);
