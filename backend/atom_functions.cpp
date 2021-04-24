@@ -1,13 +1,9 @@
-#include <iostream>
-#include <vector>
 #include <cmath>
-#include <array>
-#include <tuple>
-
 #include "math_functions.h"
 #include "logging_functions.h"
 #include "atom_class.h"
 
+#include "atom_functions.h"
 using std::sin, std::cos, std::sqrt, std::pow, std::abs;
 
 /**
@@ -180,6 +176,7 @@ Atoms make_supercell(Atoms &prim, int2dvec_t &superCellMatrix)
     return superatoms;
 };
 
+// Rotates Atoms object around z-axis for given angle theta in degrees.
 Atoms rotate_atoms_around_z(Atoms &atoms, double &theta)
 {
     double t = M_PI * theta / 180.0;
@@ -211,6 +208,7 @@ Atoms rotate_atoms_around_z(Atoms &atoms, double &theta)
     return rotatoms;
 };
 
+// Translates Atoms object along z-direction for given shift.
 void translate_atoms_z(Atoms &atoms, double shift)
 {
     double2dvec_t pos1 = atoms.positions;
@@ -225,6 +223,7 @@ void translate_atoms_z(Atoms &atoms, double shift)
     atoms.positions = new_pos;
 };
 
+// Helper function to get minimum and maximum z values of positions.
 std::tuple<double, double> get_min_max_z(Atoms &atoms)
 {
     double min_z = atoms.positions[0][2];
@@ -244,6 +243,13 @@ std::tuple<double, double> get_min_max_z(Atoms &atoms)
     return std::make_tuple(min_z, max_z);
 };
 
+/**
+ * Stacks two Atoms objects on top of each other with an interlayer distance given by distance.
+ * 
+ * Returns a new Atoms object.
+ * 
+ * The new unit cell is given by C = A + weight * (B - A).
+ */
 Atoms stack_atoms(Atoms bottom, Atoms top, double &weight, double &distance)
 {
     // need to make sure that both cells have the same initial c length (probably from python)

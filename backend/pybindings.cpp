@@ -3,11 +3,18 @@
 #include <pybind11/iostream.h>
 
 #include "logging_functions.h"
+#include "math_functions.h"
 #include "atom_class.h"
+#include "atom_functions.h"
+#include "interface_class.h"
 #include "coincidence_algorithm.h"
-#include "test.h"
 
 namespace py = pybind11;
+
+typedef std::vector<int> int1dvec_t;
+typedef std::vector<double> double1dvec_t;
+typedef std::vector<std::vector<int>> int2dvec_t;
+typedef std::vector<std::vector<double>> double2dvec_t;
 
 PYBIND11_MAKE_OPAQUE(int1dvec_t);
 PYBIND11_MAKE_OPAQUE(int2dvec_t);
@@ -51,17 +58,10 @@ PYBIND11_MODULE(hetbuilder_backend, m)
         .def_readonly("spacegroup", &Interface::spaceGroup);
 
     py::class_<CoincidenceAlgorithm>(m, "CppCoincidenceAlgorithmClass")
-        .def(py::init<Atoms &, Atoms &, int &, int &, double1dvec_t &, double &, double &, double &, int &, double &, double &>())
+        .def(py::init<Atoms &, Atoms &>())
         .def("run", &CoincidenceAlgorithm::run, "Runs the coincidence algorithm.");
 
     // function definitions
-    m.def("test_coincidence_algorithm",
-          &test_coincidence_algorithm,
-          py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
-          "Test function to check that hte coincidence algorithm is executed.");
-
-    m.def("test_atom_binding", &test_atom_binding, "Test function to bind Atom class.");
-
     m.def("get_number_of_omp_threads", &get_number_of_threads, "Returns number of available OMP threads.");
 
     m.def("cpp_make_supercell", &make_supercell, "C++ implementation to make supercell");

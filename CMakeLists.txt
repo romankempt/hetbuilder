@@ -15,15 +15,13 @@ file(GLOB SOURCES
 )
 
 if((NOT CMAKE_BUILD_TYPE) OR (CMAKE_BUILD_TYPE MATCHES RELEASE))
-  set(CMAKE_BUILD_TYPE RELEASE)
+    set(CMAKE_BUILD_TYPE RELEASE)
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif()
 
 if((CMAKE_BUILD_TYPE MATCHES DEBUG) OR (CMAKE_BUILD_TYPE MATCHES Debug))
-  message("-- BUILD TYPE: ${CMAKE_BUILD_TYPE}")
-  set(TARGET hetbuilder.exe)
-  add_executable(${TARGET} ${SOURCES})  
-  message("-- TARGET EXECUTABLE: ${TARGET}")
+  set(CMAKE_BUILD_TYPE DEBUG)
+  set(CMAKE_CXX_FLAGS_RELEASE "-O0")
 endif()
 
 message("-- CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
@@ -56,9 +54,6 @@ endif()
 find_package(pybind11 CONFIG REQUIRED)
 pybind11_add_module(hetbuilder_backend ${PROJECT_SOURCE_DIR}/backend/pybindings.cpp ${SOURCES})
 
-if(CMAKE_BUILD_TYPE MATCHES RELEASE)
-  target_link_libraries(hetbuilder_backend PRIVATE ${Python3_LIBRARY} OpenMP::OpenMP_CXX ${SPGLIB})
-else()
-  target_link_libraries(${TARGET} PUBLIC ${Python3_LIBRARY} OpenMP::OpenMP_CXX ${SPGLIB})
-endif()
+target_link_libraries(hetbuilder_backend PRIVATE ${Python3_LIBRARY} OpenMP::OpenMP_CXX ${SPGLIB})
+
 

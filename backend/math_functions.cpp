@@ -1,8 +1,10 @@
 #include <cmath>
 #include <vector>
 #include <array>
+#include <set>
+#include <map>
 
-#include "logging_functions.h"
+#include "math_functions.h"
 
 using std::sin, std::cos, std::sqrt, std::pow, std::abs;
 
@@ -167,6 +169,7 @@ template int2dvec_t matrix3x3_dot_matrix3x3<int, int>(int2dvec_t &mat1, int2dvec
 template double2dvec_t matrix3x3_dot_matrix3x3<int, double>(int2dvec_t &mat1, double2dvec_t &mat2);
 template double2dvec_t matrix3x3_dot_matrix3x3<double, double>(double2dvec_t &mat1, double2dvec_t &mat2);
 
+// Returns transpose of 3x3 matrix mat.
 template <typename T>
 std::vector<std::vector<T>> transpose_matrix3x3(std::vector<std::vector<T>> &mat)
 {

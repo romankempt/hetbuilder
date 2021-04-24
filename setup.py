@@ -41,7 +41,7 @@ class CMakeBuild(build_ext):
         if not extdir.endswith(os.path.sep):
             extdir += os.path.sep
 
-        cfg = "TESTING" if self.debug else "RELEASE"
+        cfg = "DEBUG" if self.debug else "RELEASE"
 
         # CMake lets you override the generator - we need to check this.
         # Can be set with Conda-Build, for example.

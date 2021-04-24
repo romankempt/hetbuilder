@@ -6,6 +6,9 @@
 #include <omp.h>
 #endif
 
+#include "math_functions.h"
+#include "logging_functions.h"
+
 typedef std::vector<int> int1dvec_t;
 typedef std::vector<double> double1dvec_t;
 typedef std::vector<std::vector<int>> int2dvec_t;

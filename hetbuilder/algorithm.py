@@ -73,9 +73,8 @@ class CoincidenceAlgorithm:
         nthreads = get_number_of_omp_threads()
         logger.info("Using {:d} OpenMP threads.".format(nthreads))
         logger.info("Initializing {:d} grid points...".format(ncombinations))
-        alg = CppCoincidenceAlgorithmClass(
-            bottom,
-            top,
+        alg = CppCoincidenceAlgorithmClass(bottom, top,)
+        results = alg.run(
             Nmax,
             Nmin,
             angles,
@@ -86,7 +85,6 @@ class CoincidenceAlgorithm:
             symprec,
             angle_tolerance,
         )
-        results = alg.run()
         logger.info("Found {:d} results.".format(len(results)))
         if len(results) > 0:
             interfaces = [Interface(k) for k in results]

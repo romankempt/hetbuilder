@@ -1,17 +1,11 @@
-#include <cmath>
-#include <vector>
-#include <iostream>
-#include <array>
-#include <map>
-#include <algorithm>
 #include <set>
-
-#include "spglib.h"
 
 #include "logging_functions.h"
 #include "math_functions.h"
 #include "atom_class.h"
 #include "atom_functions.h"
+#include "interface_class.h"
+#include "coincidence_algorithm.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -26,7 +20,7 @@
  * 
  * The case of m1 = m2 = n1 = n2 is already removed, including the null vector.
  */
-int2dvec_t find_coincidences(double2dvec_t &A, double2dvec_t &B, double &theta, int &Nmin, int &Nmax, double &tolerance)
+int2dvec_t CoincidenceAlgorithm::find_coincidences(double2dvec_t &A, double2dvec_t &B, double &theta, int &Nmin, int &Nmax, double &tolerance)
 {
 
     int2dvec_t coincidences;
@@ -82,7 +76,7 @@ int2dvec_t find_coincidences(double2dvec_t &A, double2dvec_t &B, double &theta, 
  * All pairs with an absolute greatest common divisor different from 1 are removed,
  * because they correspond to scalar multiples of other smaller super cells.
  */
-int2dvec_t find_unique_pairs(int2dvec_t &coincidences)
+int2dvec_t CoincidenceAlgorithm::find_unique_pairs(int2dvec_t &coincidences)
 {
     int2dvec_t uniquePairs;
 
@@ -137,8 +131,8 @@ int2dvec_t find_unique_pairs(int2dvec_t &coincidences)
  * 
  * Returns a vector of interfaces.
  */
-std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, std::map<double, int2dvec_t> &AnglesMN,
-                                            double &weight, double &distance, int &no_idealize, double &symprec, double &angle_tolerance)
+std::vector<Interface> CoincidenceAlgorithm::build_all_supercells(Atoms &bottom, Atoms &top, std::map<double, int2dvec_t> &AnglesMN,
+                                                                  double &weight, double &distance, int &no_idealize, double &symprec, double &angle_tolerance)
 {
     std::vector<Interface> stacks;
     for (auto i = AnglesMN.begin(); i != AnglesMN.end(); ++i)
@@ -178,10 +172,72 @@ std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, std::map<
  * 
  * Returns a vector of interfaces.
  */
-std::vector<Interface> filter_supercells(std::vector<Interface> &stacks)
+std::vector<Interface> CoincidenceAlgorithm::filter_supercells(std::vector<Interface> &stacks)
 {
     std::set<Interface> s(stacks.begin(), stacks.end());
     std::vector<Interface> v(s.begin(), s.end());
 
     return v;
+};
+
+/**
+ * Executes the coincidence lattice search algorithm for given parameters.
+ */
+std::vector<Interface> CoincidenceAlgorithm::run(int Nmax,
+                                                 int Nmin,
+                                                 double1dvec_t angles,
+                                                 double tolerance,
+                                                 double weight,
+                                                 double distance,
+                                                 int no_idealize,
+                                                 double symprec,
+                                                 double angle_tolerance)
+{
+    int2dvec_t coincidences;
+    std::map<double, int2dvec_t> AnglesMN;
+
+    // basis is transposed
+    double2dvec_t basisA = {{this->primitive_bottom.lattice[0][0], this->primitive_bottom.lattice[1][0]}, {this->primitive_bottom.lattice[0][1], this->primitive_bottom.lattice[1][1]}};
+    double2dvec_t basisB = {{this->primitive_top.lattice[0][0], this->primitive_top.lattice[1][0]}, {this->primitive_top.lattice[0][1], this->primitive_top.lattice[1][1]}};
+
+    for (int i = 0; i < angles.size(); i++)
+    {
+        double theta = angles[i];
+        coincidences = find_coincidences(basisA, basisB, theta, Nmin, Nmax, tolerance);
+        if (coincidences.size() > 0)
+        {
+            int2dvec_t uniquePairs;
+            uniquePairs = find_unique_pairs(coincidences);
+            if (uniquePairs.size() > 0)
+            {
+                AnglesMN.insert(std::make_pair(theta, uniquePairs));
+            }
+        };
+    };
+
+    std::vector<Interface> stacks;
+    if (AnglesMN.size() > 0)
+    {
+        stacks = build_all_supercells(this->primitive_bottom,
+                                      this->primitive_top,
+                                      AnglesMN,
+                                      weight,
+                                      distance,
+                                      no_idealize,
+                                      symprec,
+                                      angle_tolerance);
+    }
+    else
+    {
+        std::cerr << "Could not find any coincidence pairs." << std::endl;
+        return {};
+    }
+
+    std::vector<Interface> fstacks;
+    if (stacks.size() > 0)
+    {
+        fstacks = filter_supercells(stacks);
+    }
+
+    return fstacks;
 };
