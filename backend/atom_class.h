@@ -133,21 +133,23 @@ public:
 
     int standardize(int to_primitive = 1, int no_idealize = 0, double symprec = 1e-5, double angle_tolerance = 5.0)
     {
-        double spglibBasis[3][3];
-        lattice_to_spglib_array(spglibBasis);
         double spglibPos[this->numAtom][3];
         positions_to_spglib_array(spglibPos);
+
+        double spglibBasis[3][3];
+        lattice_to_spglib_array(spglibBasis);
+
         int spglibTypes[this->numAtom];
         atomic_numbers_to_spglib_types(spglibTypes);
 
-        int success = spgat_standardize_cell(spglibBasis,
-                                             spglibPos,
-                                             spglibTypes,
-                                             this->numAtom,
-                                             to_primitive,
-                                             no_idealize,
-                                             symprec,
-                                             angle_tolerance);
+        int newNumAtoms = spgat_standardize_cell(spglibBasis,
+                                                 spglibPos,
+                                                 spglibTypes,
+                                                 this->numAtom,
+                                                 to_primitive,
+                                                 no_idealize,
+                                                 symprec,
+                                                 angle_tolerance);
         int spaceGroup;
         char symbol[11];
         spaceGroup = spgat_get_international(symbol,
@@ -157,7 +159,7 @@ public:
                                              this->numAtom,
                                              symprec,
                                              angle_tolerance);
-        if (success != 0)
+        if (newNumAtoms != 0)
         {
             // transposition
             for (unsigned i = 0; (i < 3); i++)
@@ -167,11 +169,10 @@ public:
                     this->lattice[j][i] = spglibBasis[i][j];
                 }
             }
-            int arrSize = sizeof(spglibPos) / sizeof(spglibPos[0]);
-            this->numAtom = arrSize;
+            this->numAtom = newNumAtoms;
             double2dvec_t spglibScalPos;
-            int1dvec_t spglibNewTypes(this->numAtom, 0);
-            for (unsigned i = 0; (i < this->numAtom); i++)
+            int1dvec_t spglibNewTypes(newNumAtoms, 0);
+            for (unsigned i = 0; (i < newNumAtoms); i++)
             {
                 double1dvec_t subvec = {spglibPos[i][0], spglibPos[i][1], spglibPos[i][2]};
                 spglibScalPos.push_back(subvec);

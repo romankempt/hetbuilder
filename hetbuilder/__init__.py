@@ -9,5 +9,4 @@ if sys.version_info[0] == 2:
 __version__ = "0.2.0"
 
 
-from hetbuilder.logging_settings import *
 from hetbuilder.algorithm import *

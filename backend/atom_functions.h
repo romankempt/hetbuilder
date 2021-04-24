@@ -21,4 +21,4 @@ Atoms rotate_atoms_around_z(Atoms &atoms, double &theta);
  * 
  * Must not be passed by reference apparently!
 */
-Atoms stack_atoms(Atoms &bottom, Atoms &top, double &weight, double &distance);
+Atoms stack_atoms(Atoms bottom, Atoms top, double &weight, double &distance);

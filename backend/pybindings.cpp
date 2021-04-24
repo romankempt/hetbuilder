@@ -37,7 +37,8 @@ PYBIND11_MODULE(hetbuilder_backend, m)
         .def_readwrite("positions", &Atoms::positions)
         .def_readwrite("atomic_numbers", &Atoms::atomic_numbers)
         .def("standardize", &Atoms::standardize, "Spglib standardization.")
-        .def("print", &Atoms::print, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(), "Print information.");
+        .def("print", &Atoms::print, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(), "Print information.")
+        .def("scale_cell", &Atoms::scale_cell, "Scales cell.");
 
     py::class_<Interface>(m, "CppInterfaceClass")
         .def(py::init<Atoms &, Atoms &, Atoms &, double &, int2dvec_t &, int2dvec_t &, int &>())

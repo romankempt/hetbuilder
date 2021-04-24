@@ -61,5 +61,3 @@ def set_verbosity_level(verbosity):
         logger.addHandler(handler)
     logger.setLevel(level)
 
-
-set_verbosity_level(1)

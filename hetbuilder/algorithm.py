@@ -1,8 +1,8 @@
 import ase.io
 from ase.atoms import Atoms
 from ase.spacegroup import Spacegroup
+from hetbuilder.log import *
 
-from logging_settings import *
 
 from hetbuilder_backend import (
     double2dVector,

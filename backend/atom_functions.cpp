@@ -244,7 +244,7 @@ std::tuple<double, double> get_min_max_z(Atoms &atoms)
     return std::make_tuple(min_z, max_z);
 };
 
-Atoms stack_atoms(Atoms &bottom, Atoms &top, double &weight, double &distance)
+Atoms stack_atoms(Atoms bottom, Atoms top, double &weight, double &distance)
 {
     // need to make sure that both cells have the same initial c length (probably from python)
     auto [min_z1, max_z1] = get_min_max_z(bottom);

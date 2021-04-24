@@ -160,7 +160,6 @@ std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, std::map<
             Atoms topLayerRot = rotate_atoms_around_z(topLayer, theta);
             Atoms interface = stack_atoms(bottomLayer, topLayerRot, weight, distance);
             int spacegroup = interface.standardize(1, no_idealize, symprec, angle_tolerance);
-
             if (spacegroup != 0)
             {
                 Interface stack(bottomLayer, topLayerRot, interface, theta, M, N, spacegroup);
