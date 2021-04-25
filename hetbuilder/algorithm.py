@@ -1,8 +1,9 @@
 import ase.io
 from ase.atoms import Atoms
 from ase.spacegroup import Spacegroup
-from hetbuilder.log import *
 
+from hetbuilder.log import *
+from hetbuilder.atom_checks import check_atoms, recenter
 
 from hetbuilder_backend import (
     double2dVector,
@@ -37,19 +38,23 @@ def cpp_atoms_to_ase_atoms(cppatoms):
 
 class Interface:
     def __init__(self, interface: "CppInterfaceClass" = None) -> None:
-        self.bottom = cpp_atoms_to_ase_atoms(interface.bottom)
-        self.top = cpp_atoms_to_ase_atoms(interface.top)
-        self.stack = cpp_atoms_to_ase_atoms(interface.stack)
+        bottom = cpp_atoms_to_ase_atoms(interface.bottom)
+        top = cpp_atoms_to_ase_atoms(interface.top)
+        stack = cpp_atoms_to_ase_atoms(interface.stack)
+        self.bottom = recenter(bottom)
+        self.top = recenter(top)
+        self.stack = recenter(stack)
         self.M = [[j for j in k] for k in interface.M]
         self.N = [[j for j in k] for k in interface.N]
         self.spacegroup = Spacegroup(interface.spacegroup)
         self.angle = interface.angle
+        # if monoclinic by bravais lattice, turn b to c
 
 
 class CoincidenceAlgorithm:
     def __init__(self, bottom: "ase.atoms.Atoms", top: "ase.atoms.Atoms") -> None:
-        self.bottom = bottom.copy()
-        self.top = top.copy()
+        self.bottom = check_atoms(bottom)
+        self.top = check_atoms(top)
 
     def run(
         self,
@@ -65,6 +70,14 @@ class CoincidenceAlgorithm:
     ):
         bottom = ase_atoms_to_cpp_atoms(self.bottom)
         top = ase_atoms_to_cpp_atoms(self.top)
+
+        if (self.bottom == self.top) and (0 in angles):
+            logger.warning("The bottom and top structure seem to be identical.")
+            logger.warning(
+                "Removing the angle 0° from the search because all lattice points would match."
+            )
+            angles = [k for k in angles if abs(k) > 1e-4]
+
         angles = double1dVector(angles)
         no_idealize = int(no_idealize)
 
@@ -72,8 +85,8 @@ class CoincidenceAlgorithm:
 
         nthreads = get_number_of_omp_threads()
         logger.info("Using {:d} OpenMP threads.".format(nthreads))
-        logger.info("Initializing {:d} grid points...".format(ncombinations))
-        alg = CppCoincidenceAlgorithmClass(bottom, top,)
+        logger.info("Running through {:d} grid points...".format(ncombinations))
+        alg = CppCoincidenceAlgorithmClass(bottom, top)
         results = alg.run(
             Nmax,
             Nmin,
@@ -85,8 +98,11 @@ class CoincidenceAlgorithm:
             symprec,
             angle_tolerance,
         )
-        logger.info("Found {:d} results.".format(len(results)))
-        if len(results) > 0:
+        if len(results) == 0:
+            logger.error("Could not find any coincidence pairs for these parameters.")
+
+        elif len(results) > 0:
+            logger.info("Found {:d} results.".format(len(results)))
             interfaces = [Interface(k) for k in results]
             return interfaces
         else:

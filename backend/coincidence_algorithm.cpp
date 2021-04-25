@@ -4,12 +4,15 @@
 #include "math_functions.h"
 #include "atom_class.h"
 #include "atom_functions.h"
+#include "helper_classes.h"
 #include "interface_class.h"
 #include "coincidence_algorithm.h"
 
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+
+typedef std::map<double, std::vector<CoincidencePairs>> angle_dict_t;
 
 /**
  * Solves the equation |Am - R(theta)Bn| < tolerance for a given angle theta.
@@ -80,10 +83,10 @@ int2dvec_t CoincidenceAlgorithm::find_unique_pairs(int2dvec_t &coincidences)
 {
     int2dvec_t uniquePairs;
 
-#pragma omp parallel for shared(uniquePairs, coincidences) schedule(static) ordered collapse(1)
+#pragma omp parallel for shared(uniquePairs, coincidences) schedule(static) ordered collapse(2)
     for (int i = 0; i < coincidences.size(); i++)
     {
-        for (int j = i + 1; j < coincidences.size(); j++)
+        for (int j = 0; j < coincidences.size(); j++)
         {
             int m1 = coincidences[i][0];
             int m2 = coincidences[i][1];
@@ -122,24 +125,16 @@ int2dvec_t CoincidenceAlgorithm::find_unique_pairs(int2dvec_t &coincidences)
     }
 };
 
-/**
- * Builds all supercells, applying the supercell matrices M and N and the Rotation R(theta).
- * 
- * The unit cell of the stack (interface) is given bei C = A + weight * (B - A).
- * The interfaces are standardized via spglib for the given symprec and angle_tolerance.
- * The loop over the supecell generation and standardization is OpenMP parallel.
- * 
- * Returns a vector of interfaces.
- */
-std::vector<Interface> CoincidenceAlgorithm::build_all_supercells(Atoms &bottom, Atoms &top, std::map<double, int2dvec_t> &AnglesMN,
-                                                                  double &weight, double &distance, int &no_idealize, double &symprec, double &angle_tolerance)
+// Reduces a the number of unique pairs.
+angle_dict_t CoincidenceAlgorithm::reduce_unique_pairs(std::map<double, int2dvec_t> &AnglesMN)
 {
-    std::vector<Interface> stacks;
+    angle_dict_t fAnglesMN;
     for (auto i = AnglesMN.begin(); i != AnglesMN.end(); ++i)
     {
         double theta = (*i).first;
         int2dvec_t pairs = (*i).second;
-#pragma omp parallel for shared(bottom, top, stacks, AnglesMN, theta, pairs) schedule(static) ordered collapse(1)
+        std::vector<CoincidencePairs> CoinPairs = {};
+#pragma omp parallel for default(none) shared(CoinPairs, pairs, theta) schedule(static) ordered
         for (int j = 0; j < pairs.size(); j++)
         {
             int1dvec_t row = pairs[j];
@@ -149,6 +144,40 @@ std::vector<Interface> CoincidenceAlgorithm::build_all_supercells(Atoms &bottom,
             int2dvec_t N = {{row[4], row[5], 0},
                             {row[6], row[7], 0},
                             {0, 0, 1}};
+            CoincidencePairs pair(M, N);
+#pragma omp ordered
+            CoinPairs.push_back(pair);
+        }
+        std::set<CoincidencePairs> s(CoinPairs.begin(), CoinPairs.end());
+        std::vector<CoincidencePairs> v(s.begin(), s.end());
+        fAnglesMN.insert(std::make_pair(theta, v));
+    }
+    return fAnglesMN;
+};
+
+/**
+ * Builds all supercells, applying the supercell matrices M and N and the Rotation R(theta).
+ * 
+ * The unit cell of the stack (interface) is given bei C = A + weight * (B - A).
+ * The interfaces are standardized via spglib for the given symprec and angle_tolerance.
+ * The loop over the supecell generation and standardization is OpenMP parallel.
+ * 
+ * Returns a vector of interfaces.
+ */
+std::vector<Interface> CoincidenceAlgorithm::build_all_supercells(Atoms &bottom, Atoms &top, angle_dict_t &AnglesMN,
+                                                                  double &weight, double &distance, int &no_idealize, double &symprec, double &angle_tolerance)
+{
+    std::vector<Interface> stacks;
+    for (auto i = AnglesMN.begin(); i != AnglesMN.end(); ++i)
+    {
+        double theta = (*i).first;
+        std::vector<CoincidencePairs> pairs = (*i).second;
+#pragma omp parallel for shared(bottom, top, stacks, AnglesMN, theta, pairs) schedule(static) ordered collapse(1)
+        for (int j = 0; j < pairs.size(); j++)
+        {
+            CoincidencePairs row = pairs[j];
+            int2dvec_t M = row.M;
+            int2dvec_t N = row.N;
             Atoms bottomLayer = make_supercell(bottom, M);
             Atoms topLayer = make_supercell(top, N);
             Atoms topLayerRot = rotate_atoms_around_z(topLayer, theta);
@@ -200,6 +229,8 @@ std::vector<Interface> CoincidenceAlgorithm::run(int Nmax,
     double2dvec_t basisA = {{this->primitive_bottom.lattice[0][0], this->primitive_bottom.lattice[1][0]}, {this->primitive_bottom.lattice[0][1], this->primitive_bottom.lattice[1][1]}};
     double2dvec_t basisB = {{this->primitive_top.lattice[0][0], this->primitive_top.lattice[1][0]}, {this->primitive_top.lattice[0][1], this->primitive_top.lattice[1][1]}};
 
+    // I should think about reducing the unique pairs before building the supercells.
+
     for (int i = 0; i < angles.size(); i++)
     {
         double theta = angles[i];
@@ -218,9 +249,11 @@ std::vector<Interface> CoincidenceAlgorithm::run(int Nmax,
     std::vector<Interface> stacks;
     if (AnglesMN.size() > 0)
     {
+        angle_dict_t fAnglesMN;
+        fAnglesMN = reduce_unique_pairs(AnglesMN);
         stacks = build_all_supercells(this->primitive_bottom,
                                       this->primitive_top,
-                                      AnglesMN,
+                                      fAnglesMN,
                                       weight,
                                       distance,
                                       no_idealize,
@@ -229,7 +262,7 @@ std::vector<Interface> CoincidenceAlgorithm::run(int Nmax,
     }
     else
     {
-        std::cerr << "Could not find any coincidence pairs." << std::endl;
+        //std::cerr << "Could not find any coincidence pairs." << std::endl;
         return {};
     }
 

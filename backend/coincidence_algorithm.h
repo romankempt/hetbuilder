@@ -3,7 +3,10 @@
 #include "math_functions.h"
 #include "atom_class.h"
 #include "atom_functions.h"
+#include "helper_classes.h"
 #include "interface_class.h"
+
+typedef std::map<double, std::vector<CoincidencePairs>> angle_dict_t;
 
 /**
  * Class definition of the lattice coincidence algorithm.
@@ -27,7 +30,9 @@ public:
 
     int2dvec_t find_unique_pairs(int2dvec_t &coincidences);
 
-    std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, std::map<double, int2dvec_t> &AnglesMN, double &weight, double &distance, int &no_idealize, double &symprec, double &angle_tolerance);
+    angle_dict_t reduce_unique_pairs(std::map<double, int2dvec_t> &AnglesMN);
+
+    std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, angle_dict_t &AnglesMN, double &weight, double &distance, int &no_idealize, double &symprec, double &angle_tolerance);
 
     std::vector<Interface> filter_supercells(std::vector<Interface> &stacks);
 
