@@ -75,10 +75,10 @@ setup(
     author="Roman Kempt",
     author_email="roman.kempt@tu-dresden.de",
     description="A tool to build heterostructure interfaces based on coincidence lattice theory.",
-    # long_description=open("README.md").read(),
+    long_description=open("README.md").read(),
     license="MIT",
-    # url="https://github.com/AK-Heine/2D-Interface-Builder",
-    # download_url="https://github.com/AK-Heine/2D-Interface-Builder",
+    url="https://github.com/romankempt/hetbuilder.git",
+    download_url="https://github.com/romankempt/hetbuilder.git",
     packages=find_packages(
         where="hetbuilder",
         exclude=[

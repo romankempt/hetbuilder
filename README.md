@@ -18,7 +18,6 @@ pip install 2D-interface-builder.zip
 
 ## Documentation
 
-Documentation is available at [ReadTheDocs](https://2d-interface-builder.readthedocs.io).
 
 ## Testing
 
@@ -31,7 +30,7 @@ pytest -v tests
 
 ## Requirements
 
-- [Atomic Simulation Environment](https://wiki.fysik.dtu.dk/ase/) ase 3.19 or higher
-- [Space Group Libary](https://atztogo.github.io/spglib/python-spglib.html) spglib
-- [Scientific Python](https://www.scipy.org/) scipy (including numpy, matplotlib and pandas)
-- [networkx](https://networkx.github.io/documentation/stable/install.html)
+- [Atomic Simulation Environment](https://wiki.fysik.dtu.dk/ase/)
+- [Space Group Libary](https://atztogo.github.io/spglib/python-spglib.html)
+- [SciPy](https://www.scipy.org/)
+- [pybind11](https://github.com/pybind/pybind11)
