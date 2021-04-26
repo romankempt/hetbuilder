@@ -6,10 +6,11 @@ Builds 2D heterostructure interfaces via coincidence lattice theory.
 
 ## Installation
 
-Requires a C++17 compiler and [cmake](https://cmake.org/) at least with version 3.18.4. A suitable compiler can be installed with Anaconda:
+Requires a C++17 compiler, [cmake](https://cmake.org/) at least with version 3.18.4, as well as [spglib](https://atztogo.github.io/spglib/python-spglib.html) and [pybind11](https://github.com/pybind/pybind11). 
+All can be installed with Anaconda:
 
 ```bash
-conda install -c conda-forge cxx-compiler git pip cmake
+conda install -c conda-forge cxx-compiler git pip cmake spglib pybind11
 ```
 
 Then you can directly install from git:

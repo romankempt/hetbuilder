@@ -95,7 +95,7 @@ setup(
         ],
     ),
     package_data={"": ["*.so", "*.xyz"]},
-    scripts=["bin/build_interface"],
+    scripts=["bin/build_heterostructure"],
     install_requires=[
         "spglib",
         "numpy",
