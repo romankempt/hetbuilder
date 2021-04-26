@@ -13,7 +13,7 @@ conda install -c conda-forge cxx-compiler git pip cmake
 Then you can directly install from git:
 
 ```bash
-pip install 2D-interface-builder.zip
+pip install git+https://github.com/romankempt/hetbuilder.git
 ```
 
 ## Documentation
