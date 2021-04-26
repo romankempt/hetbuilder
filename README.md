@@ -1,4 +1,4 @@
-# Hetbuild
+# Hetbuilder - builds heterostructure interfaces
 
 Builds 2D heterostructure interfaces via coincidence lattice theory.
 
@@ -28,7 +28,6 @@ Tests can be run in the project directory with
 pytest -v tests
 ```
 
-More tests will follow.
 
 ## Requirements
 
