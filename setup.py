@@ -79,21 +79,7 @@ setup(
     license="MIT",
     url="https://github.com/romankempt/hetbuilder.git",
     download_url="https://github.com/romankempt/hetbuilder.git",
-    packages=find_packages(
-        where="hetbuilder",
-        exclude=[
-            "*.tests",
-            "*.tests.*",
-            "tests.*",
-            "tests",
-            "WIP",
-            "pictures",
-            "examples",
-            "docs",
-            "*__pycache__*",
-            "*vscode*",
-        ],
-    ),
+    packages=find_packages(),
     package_data={"": ["*.so", "*.xyz"]},
     scripts=["bin/build_heterostructure"],
     install_requires=[
