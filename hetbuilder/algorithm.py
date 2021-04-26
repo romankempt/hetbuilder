@@ -151,6 +151,7 @@ class CoincidenceAlgorithm:
                 "Removing the angle 0° from the search because all lattice points would match."
             )
             angles = [k for k in angles if abs(k) > 1e-4]
+            assert len(angles) > 0, "List of angles contains no values."
 
         angles = double1dVector(angles)
         no_idealize = int(no_idealize)
@@ -176,7 +177,10 @@ class CoincidenceAlgorithm:
             logger.error("Could not find any coincidence pairs for these parameters.")
 
         elif len(results) > 0:
-            logger.info("Found {:d} results.".format(len(results)))
+            if len(results) == 1:
+                logger.info("Found 1 result.")
+            else:
+                logger.info("Found {:d} results.".format(len(results)))
             interfaces = [Interface(k, weight=weight) for k in results]
             return interfaces
         else:

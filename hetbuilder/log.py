@@ -47,9 +47,9 @@ logger = setup_custom_logger("root")
 
 def set_verbosity_level(verbosity):
     logger = logging.getLogger("root")
-    if verbosity == 0:
+    if verbosity == 1:
         level = "WARNING"
-    elif verbosity == 1:
+    elif verbosity == 2:
         level = "INFO"
     else:
         level = "DEBUG"

@@ -35,7 +35,7 @@ def plot_stack(stack: "ase.atoms.Atoms" = None, supercell_data: "namedtuple" = N
         supercell_data.stress,
         supercell_data.angle,
     )
-    axes.set_title(description)
+    axes.set_title(description, fontsize=12)
     plot_atoms(stack, axes, radii=0.3)
     axes.set_frame_on(False)
     canvas.draw()
@@ -143,7 +143,7 @@ def plot_lattice_points(
     scdata = """M = ({: 2d}, {: 2d}, {: 2d}, {: 2d})\nN = ({: 2d}, {: 2d}, {: 2d}, {: 2d})""".format(
         m1, m2, m3, m4, n1, n2, n3, n4
     )
-    axes.set_title(scdata)
+    axes.set_title(scdata, fontsize=12)
     canvas.draw()
 
 
@@ -155,11 +155,17 @@ def rand_jitter(arr, jitter):
 class InteractivePlot:
     """ Interactive visualization of the results via matplotlib. """
 
-    def __init__(self, bottom, top, results, **kwargs) -> None:
+    def __init__(
+        self,
+        bottom: "ase.atoms.Atoms",
+        top: "ase.atoms.Atoms",
+        results: list[Interface],
+        weight: float,
+    ) -> None:
         self.bottom = bottom
         self.top = top
         self.results = results
-        self._weight = kwargs.get("weight", 0.5)
+        self._weight = weight
 
     def plot_results(self):
         """ Plots results interactively.
@@ -188,15 +194,20 @@ class InteractivePlot:
         ax1.scatter(
             data[:, 0], data[:, 1], color=color, alpha=0.75, picker=3.5, marker=".",
         )
-        clb = plt.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax1)
-        clb.set_label(r"Twist angle $\theta$ [°]", rotation=270, labelpad=8)
+        clb = plt.colorbar(
+            cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax1, ticks=[0, 60, 120, 180]
+        )
+        clb.set_label(
+            r"Twist angle $\theta$ [°]", rotation=270, labelpad=12, fontsize=12
+        )
+        clb.ax.set_yticklabels(["0", "60", "120", "180"])
 
         ax1.set_xlim(np.min(data[:, 0]) - 0.01, np.max(data[:, 0]) + 0.01)
         ax1.set_ylim(np.min(data[:, 1]) - 1, np.max(data[:, 1]) + 1)
         ax1.set_ylim(0, ax1.get_ylim()[1] + 10)
-        ax1.set_xlabel(r"$\bar{\varepsilon}_A + \bar{\varepsilon}_B$ [%]")
-        ax1.set_ylabel("Number of atoms")
-        ax1.set_title("Click a point to select a structure.")
+        ax1.set_xlabel(r"$\bar{\varepsilon}_A + \bar{\varepsilon}_B$ [%]", fontsize=12)
+        ax1.set_ylabel("Number of atoms", fontsize=14)
+        ax1.set_title("Click a point to select a structure.", fontsize=12)
         ax1.grid(axis="both", color="lightgray", linestyle="-", linewidth=1, alpha=0.2)
 
         ax2.set_yticks([])

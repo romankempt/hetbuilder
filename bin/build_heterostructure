@@ -1,0 +1,146 @@
+#!/usr/bin/env python
+from matplotlib.pyplot import step
+import typer
+from typer.params import Option, Argument
+from typing import Optional, Tuple, List
+
+from hetbuilder import __version__, CoincidenceAlgorithm, Interface, InteractivePlot
+from hetbuilder.log import logger, set_verbosity_level
+from hetbuilder.atom_checks import check_atoms
+
+from pathlib import Path
+
+import ase.io
+
+import numpy as np
+
+
+app = typer.Typer(add_completion=False)
+
+
+def version_callback(value: bool) -> None:
+    if value:
+        typer.echo(f"Heterostructure builder version: {__version__}")
+        raise typer.Exit()
+
+
+def check_angles(
+    angle_stepsize: float = 1, angle_limits: tuple = (0, 180), angles: list = []
+) -> list[float]:
+    if len(angles) == 0:
+        a1 = angle_limits[0]
+        a2 = angle_limits[1]
+        assert a2 > a1, "Second angle must be larger than first one."
+        assert angle_stepsize > 0, "Angle stepsize must be larger than zero."
+        assert angle_stepsize < abs(
+            a2 - a1
+        ), "Angle stepsize must be larger then difference between angles."
+        angles = list(np.arange(a1, a2, step=angle_stepsize)) + [a2]
+        logger.info(
+            "Searching {:d} angles between {:.1f} and {:.1f} degree with a stepsize of {:.1f} degree.".format(
+                len(angles), a1, a2, angle_stepsize
+            )
+        )
+        return angles
+    elif angles != None:
+        msg = ", ".join([str(k) for k in angles])
+        logger.info("Calculating the following angles: {} in degree.".format(msg))
+        return list(angles)
+    else:
+        logger.error("Angle specifications not recognized.")
+
+
+@app.command(
+    context_settings={"allow_extra_args": False, "ignore_unknown_options": False},
+    help=typer.style(
+        """Example:\n
+    ...""",
+        fg=typer.colors.GREEN,
+        bold=False,
+    ),
+)
+def main(
+    ctx: typer.Context,
+    bottom: Path = typer.Argument(..., help="Path to lower layer structure file."),
+    top: Path = typer.Argument(..., help="Path to upper layer structure file."),
+    Nmax: int = typer.Option(
+        10, "-N", "--Nmax", help="Maximum number of translations."
+    ),
+    Nmin: int = typer.Option(None, "--Nmin", help="Minimum number of translations."),
+    angle_stepsize: float = typer.Option(
+        1, "-as", "--angle_stepsize", help="Increment of angles to look through."
+    ),
+    angle_limits: Tuple[float, float] = typer.Option(
+        (0, 180),
+        "-al",
+        "--angle_limits",
+        help="Lower and upper bound of angles too look through with given step size.",
+    ),
+    angles: List[float] = typer.Option(
+        [],
+        "-a",
+        "--angle",
+        help="Explicitely set angle to look for. Can be called multiple times.",
+    ),
+    tolerance: float = typer.Option(
+        0.1,
+        "-t",
+        "--tolerance",
+        help="Tolerance criterion to accept matching lattice points in Angström.",
+    ),
+    weight: float = typer.Option(
+        0.5,
+        "-w",
+        "--weight",
+        help="Weight of the coincidence unit cell, given by C=A+weight*(B-A).",
+    ),
+    distance: float = typer.Option(
+        4, "-d", "--distance", help="Interlayer distance of the heterostructure."
+    ),
+    no_idealize: bool = typer.Option(
+        False, "--no_idealize", help="Disable idealize lattice parameters via spglib."
+    ),
+    symprec: float = typer.Option(
+        1e-5, "-sp", "--symprec", help="Symmetry precision for spglib."
+    ),
+    angle_tolerance: float = typer.Option(
+        5, "--angle_tolerance", help="Angle tolerance for spglib."
+    ),
+    version: Optional[bool] = typer.Option(
+        None, "--version", callback=version_callback
+    ),
+    verbosity: int = typer.Option(
+        2, "--verbosity", "-v", count=True, help="Set verbosity level."
+    ),
+) -> None:
+    set_verbosity_level(verbosity)
+
+    angles = check_angles(
+        angle_limits=angle_limits, angle_stepsize=angle_stepsize, angles=angles
+    )
+    Nmin = Nmin or -Nmax
+    assert Nmin < Nmax, "Nmin must be smaller than Nmax."
+    assert distance > 0, "Interlayer distance must be larger than zero."
+    assert tolerance > 0, "Tolerance must be larger than zero."
+    assert angle_tolerance >= 0, "Angle tolerance must be larger than or equal zero."
+
+    bottom = check_atoms(ase.io.read(bottom))
+    top = check_atoms(ase.io.read(top))
+    alg = CoincidenceAlgorithm(bottom, top)
+    results = alg.run(
+        Nmax=Nmax,
+        Nmin=Nmin,
+        angles=angles,
+        tolerance=tolerance,
+        distance=distance,
+        no_idealize=no_idealize,
+        symprec=symprec,
+        angle_tolerance=angle_tolerance,
+    )
+    if results is not None:
+        ip = InteractivePlot(bottom, top, results, weight)
+        ip.plot_results()
+
+
+if __name__ == "__main__":
+    app()

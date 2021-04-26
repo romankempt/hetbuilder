@@ -94,8 +94,8 @@ setup(
             "*vscode*",
         ],
     ),
-    package_data={"": ["*.so"]},
-    # scripts=["bin/build_interface"],
+    package_data={"": ["*.so", "*.xyz"]},
+    scripts=["bin/build_interface"],
     install_requires=[
         "spglib",
         "numpy",
@@ -107,6 +107,7 @@ setup(
         "pybind11",
         "pretty_errors",
         "rich",
+        "typer",
     ],
     classifiers=[
         "License :: OSI Approved :: MIT license",
@@ -114,7 +115,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: C++",
         "Topic :: Scientific/Engineering :: Chemistry",
-        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Scientific/Engineering :: Physics",
     ],
     ext_modules=[CMakeExtension("hetbuilder_backend")],
     cmdclass={"build_ext": CMakeBuild},
