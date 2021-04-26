@@ -125,7 +125,11 @@ int2dvec_t CoincidenceAlgorithm::find_unique_pairs(int2dvec_t &coincidences)
     }
 };
 
-// Reduces a the number of unique pairs.
+/**
+ * Reduces the number of unique pairs by filtering out the pairs with the same determinant.
+ * 
+ * Pairs with positive, symmetric entries are preferred.
+ */
 angle_dict_t CoincidenceAlgorithm::reduce_unique_pairs(std::map<double, int2dvec_t> &AnglesMN)
 {
     angle_dict_t fAnglesMN;
@@ -133,8 +137,7 @@ angle_dict_t CoincidenceAlgorithm::reduce_unique_pairs(std::map<double, int2dvec
     {
         double theta = (*i).first;
         int2dvec_t pairs = (*i).second;
-        std::vector<CoincidencePairs> CoinPairs = {};
-#pragma omp parallel for default(none) shared(CoinPairs, pairs, theta) schedule(static) ordered
+        std::vector<CoincidencePairs> CoinPairs;
         for (int j = 0; j < pairs.size(); j++)
         {
             int1dvec_t row = pairs[j];
@@ -145,7 +148,6 @@ angle_dict_t CoincidenceAlgorithm::reduce_unique_pairs(std::map<double, int2dvec
                             {row[6], row[7], 0},
                             {0, 0, 1}};
             CoincidencePairs pair(M, N);
-#pragma omp ordered
             CoinPairs.push_back(pair);
         }
         std::set<CoincidencePairs> s(CoinPairs.begin(), CoinPairs.end());
@@ -228,8 +230,6 @@ std::vector<Interface> CoincidenceAlgorithm::run(int Nmax,
     // basis is transposed
     double2dvec_t basisA = {{this->primitive_bottom.lattice[0][0], this->primitive_bottom.lattice[1][0]}, {this->primitive_bottom.lattice[0][1], this->primitive_bottom.lattice[1][1]}};
     double2dvec_t basisB = {{this->primitive_top.lattice[0][0], this->primitive_top.lattice[1][0]}, {this->primitive_top.lattice[0][1], this->primitive_top.lattice[1][1]}};
-
-    // I should think about reducing the unique pairs before building the supercells.
 
     for (int i = 0; i < angles.size(); i++)
     {

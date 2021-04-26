@@ -1,5 +1,6 @@
 import ase.io
 from hetbuilder.algorithm import *
+from hetbuilder.plotting import InteractivePlot
 
 bottom = ase.io.read(
     "/mnt/c/Users/rkempt/Repositories/heterostructure_builder/tests/MoS2_2H_1l.xyz"
@@ -10,13 +11,10 @@ top = ase.io.read(
 )
 
 alg = CoincidenceAlgorithm(bottom, top)
-results = alg.run(Nmin=-10, Nmax=10, angles=[0, 5, 10, 15, 20, 25, 30], tolerance=0.2)
-
-from ase.visualize import view
+results = alg.run(Nmin=-15, Nmax=15, angles=[0, 10, 11, 12, 13, 14, 15], tolerance=0.1)
 
 if results is not None:
     for s in results:
-        print(s.M)
-        print(s.angle)
-
-    view(results[1].stack)
+        print(s.angle, s.M)
+    ipl = InteractivePlot(bottom, top, results, weight=0.5)
+    ipl.plot_results()

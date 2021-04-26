@@ -7,10 +7,6 @@
  */
 int CoincidencePairs::score() const
 {
-    // more positive values are preferred (high sum)
-    // symmetries are preferred
-    // checks are only run for M (sufficient)
-
     int sum = this->M[0][0] + this->M[0][1] + this->M[1][0] + this->M[1][1];
     int positivity = sum > 0;
 

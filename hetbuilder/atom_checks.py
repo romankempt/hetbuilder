@@ -79,7 +79,7 @@ def find_fragments(atoms: "ase.atoms.Atoms", scale: float = 1.5) -> list:
     return fragments
 
 
-def find_periodic_axes(atoms) -> dict:
+def find_periodic_axes(atoms: "ase.atoms.Atoms") -> dict:
     """Evaluates if given structure is qualitatively periodic along certain lattice directions.
 
     Args:
