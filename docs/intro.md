@@ -1,4 +1,4 @@
-# Hetbuilder - builds heterostructure interfaces
+# Hetbuilder
 
 [![DOI](https://zenodo.org/badge/358881237.svg)](https://zenodo.org/badge/latestdoi/358881237)
 

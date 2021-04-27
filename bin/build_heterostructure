@@ -116,20 +116,13 @@ def main(
 ) -> None:
     set_verbosity_level(verbosity)
 
-    assert Nmin < Nmax, "Nmin must be smaller than Nmax."
-    assert Nmin > 0, "Nmin must be larger than 0."
-    assert Nmax > 0, "Nmax must be larger than 0."
-    assert distance > 0, "Interlayer distance must be larger than zero."
-    assert tolerance > 0, "Tolerance must be larger than zero."
-    assert angle_tolerance >= 0, "Angle tolerance must be larger than or equal zero."
-
-    bottom = check_atoms(ase.io.read(bottom))
-    top = check_atoms(ase.io.read(top))
+    bottom = ase.io.read(bottom)
+    top = ase.io.read(top)
     angles = check_angles(
         angle_limits=angle_limits, angle_stepsize=angle_stepsize, angles=angles
     )
 
-    alg = CoincidenceAlgorithm(bottom, top, check=False)
+    alg = CoincidenceAlgorithm(bottom, top)
     results = alg.run(
         Nmax=Nmax,
         Nmin=Nmin,

@@ -5,10 +5,12 @@ Builds heterostructure interfaces via coincidence lattice theory.
 
 .. toctree::
    :maxdepth: 3
-   :caption: Building Heterostructures:  
+   :caption: Building Heterostructures
 
-   intro
+   intro   
    implementation 
+   cli
+   python_interface
 
 .. toctree::
    :maxdepth: 5

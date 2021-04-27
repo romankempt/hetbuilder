@@ -63,19 +63,26 @@ class Interface:
         top = cpp_atoms_to_ase_atoms(interface.top)
         stack = cpp_atoms_to_ase_atoms(interface.stack)
 
-        # if monoclinic by bravais lattice, turn b to c
-        if stack.cell.get_bravais_lattice().crystal_family == "monoclinic":
-            stack = permute_axes(stack, [0, 2, 1])
-
         self.bottom = recenter(bottom)
         self.top = recenter(top)
         self.stack = recenter(stack)
+        self.stack = stack
         self.M = [[j for j in k] for k in interface.M]
         self.N = [[j for j in k] for k in interface.N]
         self.spacegroup = Spacegroup(interface.spacegroup)
         self.angle = interface.angle
         self._weight = weight
         self._stress = None
+
+    def __repr__(self):
+        return "{}(M={}, N={}, spacegroup='{}', angle={:.1f}, stress={:.1f})".format(
+            self.__class__.__name__,
+            self.M,
+            self.N,
+            self.spacegroup.symbol,
+            self.angle,
+            self.stress,
+        )
 
     @property
     def stress(self) -> float:
@@ -132,6 +139,11 @@ class CoincidenceAlgorithm:
             self.bottom = bottom
             self.top = top
 
+    def __repr__(self):
+        return "{}(bottom={}, top={})".format(
+            self.__class__.__name__, self.bottom, self.top
+        )
+
     def run(
         self,
         Nmax: int = 10,
@@ -173,6 +185,17 @@ class CoincidenceAlgorithm:
             )
             angles = [k for k in angles if abs(k) > 1e-4]
             assert len(angles) > 0, "List of angles contains no values."
+
+        assert Nmin < Nmax, "Nmin must be smaller than Nmax."
+        assert Nmin >= 0, "Nmin must be larger than or equal 0."
+        assert Nmax > 0, "Nmax must be larger than 0."
+        assert distance > 0, "Interlayer distance must be larger than zero."
+        assert tolerance > 0, "Tolerance must be larger than zero."
+        assert (
+            angle_tolerance >= 0
+        ), "Angle tolerance must be larger than or equal zero."
+        assert (symprec) > 0, "Symmetry precision must be larger than zero."
+        assert (weight >= 0) and (weight <= 1), "Weight factor must be between 0 and 1."
 
         angles = double1dVector(angles)
         no_idealize = int(no_idealize)

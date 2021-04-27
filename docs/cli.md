@@ -16,6 +16,8 @@ Specific angles can be passed explicitly with the `-a` option and can be called 
 build_heterostructure a.xyz b.xyz -a 0.15 -a 20.4 -a 30.1
 ```
 
+This takes precedence over the specification of angles via the angle limits and the angle stepsize.
+
 ## Reducing the angle range
 
 If both layers are highly symmetric, e.g., both have a hexagonal $C_6$ rotation axis, then it does not make sense to search through the entire range between 0 and 90°. It is sufficient in this case to look for angles in the range between 0 and 30°, e.g., with a stepsize of 0.5°:
@@ -36,7 +38,9 @@ Choosing large values for both is useful if one wants to look for very large sup
 build_heterostructure a.xyz b.xyz --Nmin 100 --Nmax 125
 ```
 
-But other parameters might need adjustment for that purpose as well, such as the tolerance.
+But other parameters might need adjustment for that purpose as well, such as the tolerance. Accessing these large structures via the matplotlib interface might be problematic, so it is recommended to search for these large supercells via the python interface.
+
+![](../pictures/scaling.png)
 
 ## Changing the tolerance
 

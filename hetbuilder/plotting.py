@@ -164,15 +164,18 @@ class InteractivePlot:
 
     def __init__(
         self,
-        bottom: "ase.atoms.Atoms",
-        top: "ase.atoms.Atoms",
-        results: list[Interface],
-        weight: float,
+        bottom: "ase.atoms.Atoms" = None,
+        top: "ase.atoms.Atoms" = None,
+        results: list[Interface] = None,
+        weight: float = 0.5,
     ) -> None:
         self.bottom = bottom
         self.top = top
         self.results = results
         self._weight = weight
+
+    def __repr__(self):
+        return "{}(nresults={})".format(self.__class__.__name__, len(self.results))
 
     def plot_results(self):
         """ Plots results interactively.
