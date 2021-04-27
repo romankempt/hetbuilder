@@ -67,12 +67,12 @@ def main(
     Nmax: int = typer.Option(
         10, "-N", "--Nmax", help="Maximum number of translations."
     ),
-    Nmin: int = typer.Option(None, "--Nmin", help="Minimum number of translations."),
+    Nmin: int = typer.Option(0, "--Nmin", help="Minimum number of translations."),
     angle_stepsize: float = typer.Option(
         1, "-as", "--angle_stepsize", help="Increment of angles to look through."
     ),
     angle_limits: Tuple[float, float] = typer.Option(
-        (0, 180),
+        (0, 90),
         "-al",
         "--angle_limits",
         help="Lower and upper bound of angles too look through with given step size.",
@@ -116,8 +116,9 @@ def main(
 ) -> None:
     set_verbosity_level(verbosity)
 
-    Nmin = Nmin or -Nmax
     assert Nmin < Nmax, "Nmin must be smaller than Nmax."
+    assert Nmin > 0, "Nmin must be larger than 0."
+    assert Nmax > 0, "Nmax must be larger than 0."
     assert distance > 0, "Interlayer distance must be larger than zero."
     assert tolerance > 0, "Tolerance must be larger than zero."
     assert angle_tolerance >= 0, "Angle tolerance must be larger than or equal zero."

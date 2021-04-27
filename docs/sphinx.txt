@@ -1,0 +1,3 @@
+sphinx-apidoc -o aimstools/ ../aimstools/ ../*test* ../*WIP* ../*setup* ../aimstools/*misc* *sphinx* --separate
+make clean
+make html

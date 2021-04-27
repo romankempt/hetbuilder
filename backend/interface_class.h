@@ -46,11 +46,11 @@ inline bool operator==(const Interface &c1, const Interface &c2)
 {
     bool spgmatch = (c1.spaceGroup == c2.spaceGroup);
     bool nummatch = (c1.stack.numAtom == c2.stack.numAtom);
-    bool anglematch = std::abs(c1.angle - c2.angle) < 1e-4;
+    //bool anglematch = std::abs(c1.angle - c2.angle) < 1e-4;
     double area1 = std::abs(c1.stack.lattice[0][0] * c1.stack.lattice[1][1] - c1.stack.lattice[0][1] * c1.stack.lattice[1][0]);
     double area2 = std::abs(c2.stack.lattice[0][0] * c2.stack.lattice[1][1] - c2.stack.lattice[0][1] * c2.stack.lattice[1][0]);
     bool areamatch = std::abs(area1 - area2) < 1e-6;
-    bool equals = (spgmatch && nummatch && anglematch && areamatch);
+    bool equals = (spgmatch && nummatch && areamatch);
     return equals;
 }
 

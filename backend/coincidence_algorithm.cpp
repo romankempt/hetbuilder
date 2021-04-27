@@ -29,34 +29,37 @@ int2dvec_t CoincidenceAlgorithm::find_coincidences(double2dvec_t &A, double2dvec
     int2dvec_t coincidences;
 
 #pragma omp parallel for default(none) shared(A, B, theta, Nmin, Nmax, tolerance, coincidences) schedule(static) ordered collapse(4)
-    for (int i = Nmin; i < (Nmax + 1); i++)
+    for (int i = -Nmax; i < (Nmax + 1); i++)
     {
-        for (int j = Nmin; j < (Nmax + 1); j++)
+        for (int j = -Nmax; j < (Nmax + 1); j++)
         {
-            for (int k = Nmin; k < (Nmax + 1); k++)
+            for (int k = -Nmax; k < (Nmax + 1); k++)
             {
-                for (int l = Nmin; l < (Nmax + 1); l++)
+                for (int l = -Nmax; l < (Nmax + 1); l++)
                 {
-                    int1dvec_t vecM = {i, j};
-                    int1dvec_t vecN = {k, l};
-                    double1dvec_t Am;
-                    double1dvec_t Bn;
-                    double1dvec_t RBn;
-                    double norm;
-                    int match;
-                    bool all_equal;
-                    Am = basis_2x2_dot_2d_vector<double, int>(A, vecM);
-                    Bn = basis_2x2_dot_2d_vector<double, int>(B, vecN);
-                    RBn = rotate_2d_vector<double>(Bn, theta);
-                    norm = get_distance<double>(Am, RBn);
-                    match = norm < tolerance;
-                    all_equal = (i == j) && (j == k) && (k == l);
-                    if (match && !all_equal)
+                    if ((std::abs(i) > Nmin) && (std::abs(j) > Nmin) && (std::abs(k) > Nmin) && (std::abs(l) > Nmin))
                     {
-                        int1dvec_t row = {i, j, k, l};
+                        int1dvec_t vecM = {i, j};
+                        int1dvec_t vecN = {k, l};
+                        double1dvec_t Am;
+                        double1dvec_t Bn;
+                        double1dvec_t RBn;
+                        double norm;
+                        int match;
+                        bool all_equal;
+                        Am = basis_2x2_dot_2d_vector<double, int>(A, vecM);
+                        Bn = basis_2x2_dot_2d_vector<double, int>(B, vecN);
+                        RBn = rotate_2d_vector<double>(Bn, theta);
+                        norm = get_distance<double>(Am, RBn);
+                        match = norm < tolerance;
+                        all_equal = (i == j) && (j == k) && (k == l);
+                        if (match && !all_equal)
+                        {
+                            int1dvec_t row = {i, j, k, l};
 #pragma omp ordered
-                        coincidences.push_back(row);
-                    };
+                            coincidences.push_back(row);
+                        }
+                    }
                 }
             }
         }

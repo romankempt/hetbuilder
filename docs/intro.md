@@ -35,11 +35,8 @@ build_heterostructure graphene.xyz MoS2.cif
 
 This should open a [matplotlib](https://matplotlib.org/) interface looking like this:
 
-![](pictures/interface.png)
+![](../pictures/interface.png)
 
-## Documentation
-
-In-depth documentation and the python-API will be uploaded soon.
 
 ## Testing
 

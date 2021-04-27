@@ -153,7 +153,14 @@ def rand_jitter(arr, jitter):
 
 
 class InteractivePlot:
-    """ Interactive visualization of the results via matplotlib. """
+    """ Interactive visualization of the results via matplotlib. 
+    
+    Args:
+        bottom (ase.atoms.Atoms): Lower layer as primitive.
+        top (ase.atoms.Atoms): Upper layer as primitive.
+        results (list): List of :class:`~hetbuilder.algorithm.Interface` returned from the coincidence lattice search.
+        weight (float, optional): Weight of the supercell.
+    """
 
     def __init__(
         self,
@@ -175,7 +182,7 @@ class InteractivePlot:
         results = self.results
         data = np.array([[i.stress, len(i.stack)] for i in results], dtype=float)
         color = [i.angle for i in results]
-        norm = Normalize(vmin=0, vmax=180, clip=True)
+        norm = Normalize(vmin=0, vmax=90, clip=True)
         cmap = LinearSegmentedColormap.from_list(
             "",
             [
@@ -195,15 +202,15 @@ class InteractivePlot:
             data[:, 0], data[:, 1], color=color, alpha=0.75, picker=3.5, marker=".",
         )
         clb = plt.colorbar(
-            cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax1, ticks=[0, 60, 120, 180]
+            cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax1, ticks=[0, 30, 60, 90]
         )
         clb.set_label(
             r"Twist angle $\theta$ [°]", rotation=270, labelpad=12, fontsize=12
         )
-        clb.ax.set_yticklabels(["0", "60", "120", "180"])
+        clb.ax.set_yticklabels(["0", "30", "60", "90"])
 
-        ax1.set_xlim(np.min(data[:, 0]) - 0.01, np.max(data[:, 0]) + 0.01)
-        ax1.set_ylim(np.min(data[:, 1]) - 1, np.max(data[:, 1]) + 1)
+        ax1.set_xlim(0.00, np.max(data[:, 0]) * 1.1)
+        ax1.set_ylim(np.min(data[:, 1]) * 0.95, np.max(data[:, 1]) * 1.05)
         ax1.set_ylim(0, ax1.get_ylim()[1] + 10)
         ax1.set_xlabel(r"$\bar{\varepsilon}_A + \bar{\varepsilon}_B$ [%]", fontsize=12)
         ax1.set_ylabel("Number of atoms", fontsize=14)

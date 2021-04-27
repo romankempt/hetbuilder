@@ -23,7 +23,7 @@ from hetbuilder_backend import (
 
 
 def ase_atoms_to_cpp_atoms(atoms: "ase.atoms.Atoms") -> "CppAtomsClass":
-    """Converts :class:~`ase.atoms.Atoms` to the C++ CppAtomsClass."""
+    """Converts :class:`~ase.atoms.Atoms` to the C++ CppAtomsClass."""
     lattice = atoms.cell.copy()
     positions = atoms.positions.copy()
     atomic_numbers = int1dVector([k for k in atoms.numbers])
@@ -33,7 +33,7 @@ def ase_atoms_to_cpp_atoms(atoms: "ase.atoms.Atoms") -> "CppAtomsClass":
 
 
 def cpp_atoms_to_ase_atoms(cppatoms: "CppAtomsClass") -> "ase.atoms.Atoms":
-    """Converts the  C++ CppAtomsClass to :class:~`ase.atoms.Atoms`"""
+    """Converts the C++ CppAtomsClass to :class:`~ase.atoms.Atoms`"""
     lattice = [[j for j in k] for k in cppatoms.lattice]
     positions = [[j for j in k] for k in cppatoms.positions]
     numbers = [i for i in cppatoms.atomic_numbers]
@@ -44,7 +44,19 @@ def cpp_atoms_to_ase_atoms(cppatoms: "CppAtomsClass") -> "ase.atoms.Atoms":
 
 
 class Interface:
-    """Container class to access the C++ CppInterfaceClass."""
+    """Exposes the C++ implementation of the CppInterfaceClass.
+    
+    Attributes:
+        bottom (ase.atoms.Atoms): Lower layer as supercell.
+        top (ase.atoms.Atoms): Upper layer as supercell.
+        stack (ase.atoms.Atoms): Combined lower and upper layer as supercell.
+        M (numpy.ndarray): Supercell matrix M.
+        N (numpy.ndarray): Supercell matrix N.
+        spacegroup (ase.spacegroup.Spacegroup): Space group of the stack.
+        angle (float): Twist angle in degree.
+        stress (float): Stress measure.
+
+    """
 
     def __init__(self, interface: "CppInterfaceClass" = None, weight=0.5) -> None:
         bottom = cpp_atoms_to_ase_atoms(interface.bottom)
@@ -102,7 +114,7 @@ class Interface:
 
 
 class CoincidenceAlgorithm:
-    """Wrapper around the backend implementation of the CppCoincidenceAlgorithmClass.
+    """Exposes the C++ implementation of the CppCoincidenceAlgorithmClass.
     
     Args:
         bottom (ase.atoms.Atoms): Lower layer, needs to be two-dimensional.
@@ -123,7 +135,7 @@ class CoincidenceAlgorithm:
     def run(
         self,
         Nmax: int = 10,
-        Nmin: int = -10,
+        Nmin: int = 0,
         angles: list[float] = [],
         tolerance: float = 0.1,
         weight: float = 0.5,
@@ -142,11 +154,11 @@ class CoincidenceAlgorithm:
             weight (float): The coincidence unit cell is C = A + weight * (B-A). Defaults to 0.5.
             distance (float): Interlayer distance of the stacks. Defaults to 4.0 Angström.
             no_idealize (bool): Does not idealize unit cell parameters in the spglib standardization routine. Defaults to False.
-            symprec (float): Symmetry precision for spglib. Defaults to 1e-5.
+            symprec (float): Symmetry precision for spglib. Defaults to 1e-5 Angström.
             angle_tolerance (float): Angle tolerance fo the spglib `spgat` routines. Defaults to 5.
 
         Returns:
-            list[Interfaces] : A list of :class:~`hetbuilder.algorithm.Interface`.
+            list : A list of :class:`~hetbuilder.algorithm.Interface`.
 
         """
         bottom = ase_atoms_to_cpp_atoms(self.bottom)
@@ -165,7 +177,7 @@ class CoincidenceAlgorithm:
         angles = double1dVector(angles)
         no_idealize = int(no_idealize)
 
-        ncombinations = ((Nmax - Nmin + 1) ** 4) * len(angles)
+        ncombinations = ((2 * (Nmax - Nmin)) ** 4) * len(angles)
 
         nthreads = get_number_of_omp_threads()
         logger.info("Using {:d} OpenMP threads.".format(nthreads))
