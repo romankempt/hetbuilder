@@ -69,13 +69,20 @@ class CMakeBuild(build_ext):
         )
 
 
+# read the contents of your README file
+from os import path
+
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, "README.md"), encoding="utf-8") as f:
+    long_description = f.read()
+
 setup(
     name="hetbuilder",
     version=version,
     author="Roman Kempt",
     author_email="roman.kempt@tu-dresden.de",
     description="A tool to build heterostructure interfaces based on coincidence lattice theory.",
-    long_description=open("README.md").read(),
+    long_description=long_description,
     license="MIT",
     url="https://github.com/romankempt/hetbuilder.git",
     download_url="https://github.com/romankempt/hetbuilder.git",
@@ -96,7 +103,6 @@ setup(
         "typer",
     ],
     classifiers=[
-        "License :: OSI Approved :: MIT license",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: C++",

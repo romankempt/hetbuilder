@@ -50,6 +50,9 @@ Tests can be run in the project directory with
 pytest -v tests
 ```
 
+## Citing
+
+If you use this tool, please cite 10.5281/zenodo.4721346.
 
 ## Requirements
 
