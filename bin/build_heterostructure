@@ -54,7 +54,8 @@ def check_angles(
     context_settings={"allow_extra_args": False, "ignore_unknown_options": False},
     help=typer.style(
         """Example:\n
-    ...""",
+        build_interface graphene.xyz MoS2.xyz -N 10 -al 0 30 -as 0.1
+        """,
         fg=typer.colors.GREEN,
         bold=False,
     ),
@@ -115,9 +116,6 @@ def main(
 ) -> None:
     set_verbosity_level(verbosity)
 
-    angles = check_angles(
-        angle_limits=angle_limits, angle_stepsize=angle_stepsize, angles=angles
-    )
     Nmin = Nmin or -Nmax
     assert Nmin < Nmax, "Nmin must be smaller than Nmax."
     assert distance > 0, "Interlayer distance must be larger than zero."
@@ -126,7 +124,11 @@ def main(
 
     bottom = check_atoms(ase.io.read(bottom))
     top = check_atoms(ase.io.read(top))
-    alg = CoincidenceAlgorithm(bottom, top)
+    angles = check_angles(
+        angle_limits=angle_limits, angle_stepsize=angle_stepsize, angles=angles
+    )
+
+    alg = CoincidenceAlgorithm(bottom, top, check=False)
     results = alg.run(
         Nmax=Nmax,
         Nmin=Nmin,

@@ -107,18 +107,25 @@ class CoincidenceAlgorithm:
     Args:
         bottom (ase.atoms.Atoms): Lower layer, needs to be two-dimensional.
         top (ase.atoms.Atoms): Upper layer, needs to be two-dimensional.   
+        check (bool): Runs checks on the input structures.
     """
 
-    def __init__(self, bottom: "ase.atoms.Atoms", top: "ase.atoms.Atoms") -> None:
-        self.bottom = check_atoms(bottom)
-        self.top = check_atoms(top)
+    def __init__(
+        self, bottom: "ase.atoms.Atoms", top: "ase.atoms.Atoms", check=True
+    ) -> None:
+        if check:
+            self.bottom = check_atoms(bottom)
+            self.top = check_atoms(top)
+        else:
+            self.bottom = bottom
+            self.top = top
 
     def run(
         self,
         Nmax: int = 10,
         Nmin: int = -10,
-        angles: list[float] = [0, 10, 20, 30],
-        tolerance: float = 0.01,
+        angles: list[float] = [],
+        tolerance: float = 0.1,
         weight: float = 0.5,
         distance: float = 4,
         no_idealize: bool = False,
@@ -144,6 +151,8 @@ class CoincidenceAlgorithm:
         """
         bottom = ase_atoms_to_cpp_atoms(self.bottom)
         top = ase_atoms_to_cpp_atoms(self.top)
+        if angles == []:
+            angles = np.arange(0, 180, 1, dtype=float).tolist() + [180.0]
 
         if (self.bottom == self.top) and (0 in angles):
             logger.warning("The bottom and top structure seem to be identical.")
@@ -175,7 +184,7 @@ class CoincidenceAlgorithm:
         )
         if len(results) == 0:
             logger.error("Could not find any coincidence pairs for these parameters.")
-
+            return None
         elif len(results) > 0:
             if len(results) == 1:
                 logger.info("Found 1 result.")
@@ -183,5 +192,3 @@ class CoincidenceAlgorithm:
                 logger.info("Found {:d} results.".format(len(results)))
             interfaces = [Interface(k, weight=weight) for k in results]
             return interfaces
-        else:
-            return None
