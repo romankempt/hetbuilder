@@ -1,6 +1,7 @@
 # Hetbuilder - builds heterostructure interfaces
 
 [![DOI](https://zenodo.org/badge/358881237.svg)](https://zenodo.org/badge/latestdoi/358881237)
+[![Documentation Status](https://readthedocs.org/projects/hetbuilder/badge/?version=latest)](https://hetbuilder.readthedocs.io/en/latest/?badge=latest)
 
 Builds 2D heterostructure interfaces via coincidence lattice theory.
 
@@ -39,7 +40,7 @@ This should open a [matplotlib](https://matplotlib.org/) interface looking like 
 
 ## Documentation
 
-In-depth documentation and the python-API will be uploaded soon.
+Documentation is available at [Read the Docs](https://hetbuilder.readthedocs.io/en/latest/index.html).
 
 ## Testing
 

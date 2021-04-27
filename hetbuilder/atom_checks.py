@@ -128,6 +128,7 @@ def recenter(atoms: "ase.atoms.Atoms") -> "ase.atoms.Atoms":
     Note:
         The ase.atoms.center() method is supposed to do that, but sometimes separates the layers. I didn't find a good way to circumvene that.
     """
+    # have to think about the viewing directions here
     atoms = atoms.copy()
     atoms.wrap(pretty_translation=True)
     atoms.center(axis=(2))
