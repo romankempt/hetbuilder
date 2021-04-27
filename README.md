@@ -1,6 +1,6 @@
 # Hetbuilder - builds heterostructure interfaces
 
-[![DOI](https://zenodo.org/badge/358881237.svg)](https://zenodo.org/badge/latestdoi/358881237)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4721346.svg)](https://doi.org/10.5281/zenodo.4721346)
 [![Documentation Status](https://readthedocs.org/projects/hetbuilder/badge/?version=latest)](https://hetbuilder.readthedocs.io/en/latest/?badge=latest)
 
 Builds 2D heterostructure interfaces via coincidence lattice theory.
