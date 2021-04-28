@@ -15,6 +15,7 @@ import sys
 import sphinx_rtd_theme
 from ase.utils.sphinx import mol_role
 
+sys.path.insert(os.path.abspath('../..'))
 sys.path.insert(0, os.path.abspath("../hetbuilder"))
 sys.path.insert(0, os.path.abspath(".."))
 

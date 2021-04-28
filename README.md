@@ -14,7 +14,12 @@ All can be installed with Anaconda:
 conda install -c conda-forge cxx-compiler git pip cmake spglib pybind11
 ```
 
-Then you can directly install from git:
+Then, you can install the project from pip:
+```
+pip install hetbuilder
+```
+
+If that does not work, try directly installing from git:
 
 ```bash
 pip install git+https://github.com/romankempt/hetbuilder.git
