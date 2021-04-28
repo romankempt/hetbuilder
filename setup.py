@@ -28,7 +28,7 @@ else:
 # The name must be the _single_ output extension from the CMake build.
 # If you need multiple extensions, see scikit-build.
 class CMakeExtension(Extension):
-    def __init__(self, name, sourcedir=""):
+    def __init__(self, name, sourcedir="."):
         Extension.__init__(self, name, sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
 
@@ -87,7 +87,7 @@ setup(
     url="https://github.com/romankempt/hetbuilder.git",
     download_url="https://github.com/romankempt/hetbuilder.git",
     packages=find_packages(),
-    package_data={"": ["*.so", "*.xyz"]},
+    package_data={"": ["*.xyz", "CMakeLists.txt"]},
     scripts=["bin/build_heterostructure"],
     install_requires=[
         "spglib",
