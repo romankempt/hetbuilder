@@ -31,7 +31,7 @@ find_package(Python3 COMPONENTS Interpreter Development)
 include_directories(${Python3_INCLUDE_DIRS})
 
 # looking for spglib
-find_library(SPGLIB symspg)
+find_library(SPGLIB symspg libsymspg libsymspg.a ${Python3_LIBRARY} REQUIRED)
 if(NOT SPGLIB)
   message(FATAL_ERROR "Could not find an installation of the space group library (spglib).")
 else()
@@ -42,13 +42,6 @@ endif()
 option(USE_OPENMP "build OpenMP programs with OpenMP support enabled" ON)
 if(USE_OPENMP)
   find_package(OpenMP 4.5 REQUIRED)
-endif()
-
-find_library(PYBIND symspg)
-if(NOT SPGLIB)
-  message(FATAL_ERROR "Could not find an installation of the space group library (spglib).")
-else()
-   message("-- Found spglib ${SPGLIB}")
 endif()
 
 find_package(pybind11 CONFIG REQUIRED)

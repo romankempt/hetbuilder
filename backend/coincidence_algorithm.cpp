@@ -77,7 +77,7 @@ int2dvec_t CoincidenceAlgorithm::find_coincidences(double2dvec_t &A, double2dvec
 /**
  * Constructs the independent pairs (m1,m2,m3,m4) and (n1,n2,n3,n4).
  * 
- * First loop is OpenMP parallel. Second one cannot be collapsed because j > i to avoid repititions.
+ * I'm not a 100 % sure if I should iterate over all i j or only j > i.
  * 
  * All pairs with an absolute greatest common divisor different from 1 are removed,
  * because they correspond to scalar multiples of other smaller super cells.

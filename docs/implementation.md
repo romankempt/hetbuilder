@@ -65,7 +65,8 @@ This yields a set $S(\theta)=\{(\mathbf{M}_i, \mathbf{N}_i)\}$ of supercell matr
 The four coefficients $m_{s1}$, $m_{s2}$, $m_{k1}$ and $m_{k2}$ are determined by a grid search. Therefore, one has to iterate through all possible combinations for all given angles $\theta_i$
 
 ```math
-(N_{min} <s \leq N_{max} \text{ and } N_{min} < k \leq N_{max}) ~\forall~\theta_i ~,
+(-N_{max} \leq s \leq -N_{min} < N_{min} \leq s < N_{max} \\
+ \text{ and } -N_{max} \leq k \leq -N_{min} < N_{min} \leq k < N_{max}) ~\forall~\theta_i ~,
 ```
 
 where $N_{min}$ and $N_{max}$ are the minimum and maximum number of translations, respectively. This yields $((2 \cdot (N_{max} - N_{min})))^4) * N_{angles})$ grid points to search through, which is done in C++ employing OpenMP parallelism.
