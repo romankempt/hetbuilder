@@ -15,13 +15,11 @@ Requires a C++17 compiler, [cmake](https://cmake.org/) at least with version 3.1
 #### Installing with Anaconda
 
 Create a clean conda environment:
-
 ```bash
 conda env create -n hetbuilder python=3.9
 ```
 
 Then install the build-time dependencies first:
-
 ```bash
 conda install -c conda-forge cxx-compiler git pip cmake spglib pybind11
 ```
@@ -32,7 +30,6 @@ pip install hetbuilder
 ```
 
 If that does not work, try directly installing from git:
-
 ```bash
 pip install git+https://github.com/romankempt/hetbuilder.git
 ```
@@ -42,10 +39,10 @@ pip install git+https://github.com/romankempt/hetbuilder.git
 If you want to install with pip, it seems like need to build [spglib](https://atztogo.github.io/spglib/python-spglib.html) and [pybind11](https://github.com/pybind/pybind11) yourself. The header files and the `libsymspg.a` library are not provided by pypi.
 
 On Unix, you can install a `cxx-compiler` with:
-
 ```bash
 sudo apt install build-essential
 ```
+
 
 ## First steps
 

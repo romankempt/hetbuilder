@@ -109,5 +109,5 @@ setup(
     ],
     ext_modules=[CMakeExtension("hetbuilder_backend")],
     cmdclass={"build_ext": CMakeBuild},
-    zip_safe=False,
+    zip_safe=True,
 )
