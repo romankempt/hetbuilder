@@ -52,9 +52,15 @@ def plot_grid(
     basis = basis[:2, :2].copy()
     a1 = basis[0, :].copy()
     a2 = basis[1, :].copy()
-    p = product(range(-Nmax, Nmax + 1), range(-Nmax, Nmax + 1))
-    points = np.array([n[0] * a1 + n[1] * a2 for n in p])
-    axes.scatter(points[:, 0], points[:, 1], **kwargs)
+    # p = product(range(-Nmax, Nmax + 1), range(-Nmax, Nmax + 1))
+    # points = np.array([n[0] * a1 + n[1] * a2 for n in p])
+    # axes.scatter(points[:, 0], points[:, 1], **kwargs)
+    axes.axline(0 * a1, 1 * a1, **kwargs)
+    axes.axline(0 * a2, 1 * a2, **kwargs)
+    for n in range(-Nmax, Nmax):
+        if n != 0:
+            axes.axline(n * a1 + 0 * a2, n * a1 + n * a2, **kwargs)
+            axes.axline(0 * a1 + n * a2, n * a1 + n * a2, **kwargs)
 
 
 def plot_unit_cell_patch(cell: "numpy.ndarray", **kwargs):
@@ -97,18 +103,18 @@ def plot_lattice_points(
     natoms, m1, m2, m3, m4, n1, n2, n3, n4, angle, stress, index = supercell_data
     sc1 = np.array([[m1, m2], [m3, m4]])
     sc2 = np.array([[n1, n2], [n3, n4]])
-    Nmax = max([m1, m2, m3, m4]) * 2
+    Nmax = max(abs(j) for j in [m1, m2, m3, m4, n1, n2, n3, n4]) * 2
 
     # first cell
     plot_grid(
         basis=basis1,
         supercell_matrix=sc1,
         color="tab:red",
-        facecolor="tab:red",
-        edgecolor="tab:red",
-        alpha=0.5,
-        s=2,
-        lw=2,
+        # facecolor="tab:red",
+        # edgecolor="tab:red",
+        alpha=0.25,
+        # s=2,
+        lw=1,
         Nmax=Nmax,
     )
     A = sc1 @ basis1
@@ -118,11 +124,11 @@ def plot_lattice_points(
         basis=basis2,
         supercell_matrix=sc2,
         color="tab:blue",
-        facecolor="tab:blue",
-        edgecolor="tab:blue",
-        alpha=0.5,
-        s=2,
-        lw=2,
+        # facecolor="tab:blue",
+        # edgecolor="tab:blue",
+        alpha=0.25,
+        # s=2,
+        lw=1,
         Nmax=Nmax,
     )
     B = sc2 @ basis2

@@ -15,52 +15,42 @@ import ase.io
 import numpy as np
 
 
-app = typer.Typer(add_completion=False)
+app = typer.Typer(add_completion=True)
 
 
-def version_callback(value: bool) -> None:
+def version_callback(value: bool):
     if value:
-        typer.echo(f"Heterostructure builder version: {__version__}")
+        typer.echo(f"Hetbuilder Version: {__version__}")
         raise typer.Exit()
 
 
-def check_angles(
-    angle_stepsize: float = 1, angle_limits: tuple = (0, 180), angles: list = []
-) -> list[float]:
-    if len(angles) == 0:
-        a1 = angle_limits[0]
-        a2 = angle_limits[1]
-        assert a2 > a1, "Second angle must be larger than first one."
-        assert angle_stepsize > 0, "Angle stepsize must be larger than zero."
-        assert angle_stepsize < abs(
-            a2 - a1
-        ), "Angle stepsize must be larger then difference between angles."
-        angles = list(np.arange(a1, a2, step=angle_stepsize)) + [a2]
-        logger.info(
-            "Searching {:d} angles between {:.1f} and {:.1f} degree with a stepsize of {:.1f} degree.".format(
-                len(angles), a1, a2, angle_stepsize
-            )
-        )
-        return angles
-    elif angles != None:
-        msg = ", ".join([str(k) for k in angles])
-        logger.info("Calculating the following angles: {} in degree.".format(msg))
-        return list(angles)
-    else:
-        logger.error("Angle specifications not recognized.")
+@app.callback(
+    help=typer.style(
+        """Builds 2D heterostructure interfaces via coincidence lattice theory.\n    
+            Github repository: https://github.com/romankempt/hetbuilder\n
+            Documentation: https://hetbuilder.readthedocs.io/en\n
+            Available under the MIT License. Please cite 10.5281/zenodo.4721346.""",
+        fg=typer.colors.GREEN,
+        bold=False,
+    )
+)
+def callback(
+    version: Optional[bool] = typer.Option(
+        None, "--version", callback=version_callback, is_eager=True
+    )
+):
+    pass
 
 
 @app.command(
     context_settings={"allow_extra_args": False, "ignore_unknown_options": False},
     help=typer.style(
-        """Example:\n
-        build_interface graphene.xyz MoS2.xyz -N 10 -al 0 30 -as 0.1
-        """,
+        """Build interfaces and show results interactively.""",
         fg=typer.colors.GREEN,
         bold=False,
     ),
 )
-def main(
+def build(
     ctx: typer.Context,
     bottom: Path = typer.Argument(..., help="Path to lower layer structure file."),
     top: Path = typer.Argument(..., help="Path to upper layer structure file."),
@@ -107,19 +97,22 @@ def main(
     angle_tolerance: float = typer.Option(
         5, "--angle_tolerance", help="Angle tolerance for spglib."
     ),
-    version: Optional[bool] = typer.Option(
-        None, "--version", callback=version_callback
-    ),
     verbosity: int = typer.Option(
         2, "--verbosity", "-v", count=True, help="Set verbosity level."
     ),
 ) -> None:
+    """Builds heterostructure interface for given choice of parameters.
+    
+    Example:
+        hetbuilder build graphene.xyz MoS2.xyz -N 10 -al 0 30 -as 0.1
+    """
     set_verbosity_level(verbosity)
-
     bottom = ase.io.read(bottom)
     top = ase.io.read(top)
-    angles = check_angles(
-        angle_limits=angle_limits, angle_stepsize=angle_stepsize, angles=angles
+    logger.info(
+        "Building heterostructures from {} and {}.".format(
+            bottom.get_chemical_formula(), top.get_chemical_formula()
+        )
     )
 
     alg = CoincidenceAlgorithm(bottom, top)
@@ -127,6 +120,8 @@ def main(
         Nmax=Nmax,
         Nmin=Nmin,
         angles=angles,
+        angle_limits=angle_limits,
+        angle_stepsize=angle_stepsize,
         tolerance=tolerance,
         distance=distance,
         no_idealize=no_idealize,
@@ -136,6 +131,64 @@ def main(
     if results is not None:
         ip = InteractivePlot(bottom, top, results, weight)
         ip.plot_results()
+
+
+@app.command(
+    context_settings={"allow_extra_args": False, "ignore_unknown_options": False},
+    help=typer.style(
+        """Find lowest-stress coincidence unit cell.""",
+        fg=typer.colors.GREEN,
+        bold=False,
+    ),
+)
+def match(
+    bottom: Path = typer.Argument(..., help="Path to lower layer structure file."),
+    top: Path = typer.Argument(..., help="Path to upper layer structure file."),
+):
+    bottom = ase.io.read(bottom)
+    top = ase.io.read(top)
+    logger.info(
+        "Building heterostructure from {} and {}.".format(
+            bottom.get_chemical_formula(), top.get_chemical_formula()
+        )
+    )
+    alg = CoincidenceAlgorithm(bottom, top)
+    set_verbosity_level(3)
+    stepsize = 5
+    maximum = 26
+    ranges = list(range(1, maximum, stepsize))
+    angles = list(range(0, 91, 1))
+    max_tolerance = 0.2
+    tolerance_stepsize = 0.05
+    distance = 4
+    stresses = []
+
+    for i, (Nmin, Nmax) in enumerate(
+        list(zip(ranges, ranges[1:] + [max(ranges) + stepsize]))
+    ):
+        for j, t in enumerate(
+            np.arange(
+                tolerance_stepsize,
+                max_tolerance + tolerance_stepsize,
+                tolerance_stepsize,
+            )
+        ):
+            r = alg.run(
+                Nmax=Nmax,
+                Nmin=Nmin,
+                angles=angles,
+                tolerance=t,
+                distance=distance,
+                no_idealize=False,
+                symprec=1e-6,
+                angle_tolerance=5,
+            )
+            if r is not None:
+                stress, idx = min(
+                    (val, idx) for (idx, val) in enumerate([k.stress for k in r])
+                )
+                stresses.append(stress)
+    # have to think how to best break out of the search
 
 
 if __name__ == "__main__":

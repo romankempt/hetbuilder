@@ -43,6 +43,33 @@ def cpp_atoms_to_ase_atoms(cppatoms: "CppAtomsClass") -> "ase.atoms.Atoms":
     return atoms
 
 
+def check_angles(
+    angle_stepsize: float = 1, angle_limits: tuple = (0, 180), angles: list = []
+) -> list[float]:
+    """ Helper function to assert correct input of angles."""
+    if len(angles) == 0:
+        a1 = angle_limits[0]
+        a2 = angle_limits[1]
+        assert a2 > a1, "Second angle must be larger than first one."
+        assert angle_stepsize > 0, "Angle stepsize must be larger than zero."
+        assert angle_stepsize < abs(
+            a2 - a1
+        ), "Angle stepsize must be larger then difference between angles."
+        angles = list(np.arange(a1, a2, step=angle_stepsize)) + [a2]
+        logger.info(
+            "Searching {:d} angles between {:.1f} and {:.1f} degree with a stepsize of {:.1f} degree.".format(
+                len(angles), a1, a2, angle_stepsize
+            )
+        )
+        return angles
+    elif angles != None:
+        msg = ", ".join([str(k) for k in angles])
+        logger.info("Calculating the following angles: {} in degree.".format(msg))
+        return list(angles)
+    else:
+        logger.error("Angle specifications not recognized.")
+
+
 class Interface:
     """Exposes the C++ implementation of the CppInterfaceClass.
     
@@ -126,18 +153,11 @@ class CoincidenceAlgorithm:
     Args:
         bottom (ase.atoms.Atoms): Lower layer, needs to be two-dimensional.
         top (ase.atoms.Atoms): Upper layer, needs to be two-dimensional.   
-        check (bool): Runs checks on the input structures.
     """
 
-    def __init__(
-        self, bottom: "ase.atoms.Atoms", top: "ase.atoms.Atoms", check=True
-    ) -> None:
-        if check:
-            self.bottom = check_atoms(bottom)
-            self.top = check_atoms(top)
-        else:
-            self.bottom = bottom
-            self.top = top
+    def __init__(self, bottom: "ase.atoms.Atoms", top: "ase.atoms.Atoms") -> None:
+        self.bottom = check_atoms(bottom)
+        self.top = check_atoms(top)
 
     def __repr__(self):
         return "{}(bottom={}, top={})".format(
@@ -149,6 +169,8 @@ class CoincidenceAlgorithm:
         Nmax: int = 10,
         Nmin: int = 0,
         angles: list[float] = [],
+        angle_limits: tuple = (0, 90),
+        angle_stepsize: float = 1.0,
         tolerance: float = 0.1,
         weight: float = 0.5,
         distance: float = 4,
@@ -161,7 +183,9 @@ class CoincidenceAlgorithm:
         Args:
             Nmax (int): Maximum number of translations. Defaults to 10.
             Nmin (int): Minimum number of translations. Defaults to -10.
-            angles (list): List of angles in degree to search.
+            angles (list): List of angles in degree to search. Takes precedence over angle_limits and angle_stepsize.
+            angle_limits (tuple): Lower and upper bound of angles too look through with given step size by angle_stepsize. Defaults to (0, 90) degree.
+            angle_stepsize (float): Increment of angles to look through. Defaults to 1.0 degree.
             tolerance (float): Tolerance criterion to accept lattice match. Corresponds to a distance in Angström. Defaults to 0.01.
             weight (float): The coincidence unit cell is C = A + weight * (B-A). Defaults to 0.5.
             distance (float): Interlayer distance of the stacks. Defaults to 4.0 Angström.
@@ -175,8 +199,9 @@ class CoincidenceAlgorithm:
         """
         bottom = ase_atoms_to_cpp_atoms(self.bottom)
         top = ase_atoms_to_cpp_atoms(self.top)
-        if angles == []:
-            angles = np.arange(0, 180, 1, dtype=float).tolist() + [180.0]
+        angles = check_angles(
+            angle_limits=angle_limits, angle_stepsize=angle_stepsize, angles=angles
+        )
 
         if (self.bottom == self.top) and (0 in angles):
             logger.warning("The bottom and top structure seem to be identical.")

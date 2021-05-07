@@ -88,7 +88,7 @@ setup(
     download_url="https://github.com/romankempt/hetbuilder.git",
     packages=find_packages(),
     package_data={"": ["*.xyz", "CMakeLists.txt"]},
-    scripts=["bin/build_heterostructure"],
+    scripts=["bin/hetbuilder"],
     install_requires=[
         "numpy",
         "scipy",
