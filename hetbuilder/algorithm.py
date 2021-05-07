@@ -45,7 +45,7 @@ def cpp_atoms_to_ase_atoms(cppatoms: "CppAtomsClass") -> "ase.atoms.Atoms":
 
 def check_angles(
     angle_stepsize: float = 1, angle_limits: tuple = (0, 180), angles: list = []
-) -> list[float]:
+) -> list:
     """ Helper function to assert correct input of angles."""
     if len(angles) == 0:
         a1 = angle_limits[0]
@@ -168,7 +168,7 @@ class CoincidenceAlgorithm:
         self,
         Nmax: int = 10,
         Nmin: int = 0,
-        angles: list[float] = [],
+        angles: list = [],
         angle_limits: tuple = (0, 90),
         angle_stepsize: float = 1.0,
         tolerance: float = 0.1,
@@ -177,7 +177,7 @@ class CoincidenceAlgorithm:
         no_idealize: bool = False,
         symprec: float = 1e-5,
         angle_tolerance: float = 5,
-    ) -> list[Interface]:
+    ) -> list:
         """Executes the coincidence lattice algorithm.
 
         Args:

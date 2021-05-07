@@ -172,7 +172,7 @@ class InteractivePlot:
         self,
         bottom: "ase.atoms.Atoms" = None,
         top: "ase.atoms.Atoms" = None,
-        results: list[Interface] = None,
+        results: list = None,
         weight: float = 0.5,
     ) -> None:
         self.bottom = bottom
