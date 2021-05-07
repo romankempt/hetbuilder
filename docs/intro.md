@@ -59,10 +59,6 @@ You can use any ASE-readable structure format to specify the lower and upper lay
 hetbuilder build graphene.xyz MoS2.cif
 ```
 
-This should open a [matplotlib](https://matplotlib.org/) interface looking like this:
-
-![](pictures/interface.png)
-
 ## Documentation
 
 Documentation is available at [Read the Docs](https://hetbuilder.readthedocs.io/en/latest/index.html).
