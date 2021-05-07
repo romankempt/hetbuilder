@@ -28,7 +28,7 @@ def version_callback(value: bool):
     help=typer.style(
         """Builds 2D heterostructure interfaces via coincidence lattice theory.\n    
             Github repository: https://github.com/romankempt/hetbuilder\n
-            Documentation: https://hetbuilder.readthedocs.io/en\n
+            Documentation: https://hetbuilder.readthedocs.io/en/latest\n
             Available under the MIT License. Please cite 10.5281/zenodo.4721346.""",
         fg=typer.colors.GREEN,
         bold=False,
@@ -36,7 +36,11 @@ def version_callback(value: bool):
 )
 def callback(
     version: Optional[bool] = typer.Option(
-        None, "--version", callback=version_callback, is_eager=True
+        None,
+        "--version",
+        callback=version_callback,
+        is_eager=True,
+        help="Show version and exit.",
     )
 ):
     pass

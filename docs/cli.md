@@ -60,7 +60,7 @@ hetbuilder build a.xyz b.xyz -t 0.2
 
 ### Changing the weight factor
 
-Changing the weight factor $w$ only affects the out-comping coincidence supercells, not the results algorithm itself. A weight factor $w=0$ means that the coincidence unit cell is given only be the supercell of the lower layer. A weight factor $w=1$ means that the coincidence unit cell is given only be the supercell of the upper layer. Correspondingly, this allows to remove stresses from one of the layers at expense of the other.
+Changing the weight factor $w$ only affects the final coincidence supercells, not the results algorithm itself. A weight factor $w=0$ means that the coincidence unit cell is given only by the supercell of the lower layer. A weight factor $w=1$ means that the coincidence unit cell is given only by the supercell of the upper layer. Correspondingly, this allows to remove stresses from one of the layers at expense of the other.
 
 ```bash
 hetbuilder build a.xyz b.xyz -w 0
