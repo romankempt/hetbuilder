@@ -46,16 +46,17 @@ sudo apt install build-essential
 
 ## First steps
 
-The installation exposes a single [typer](https://github.com/tiangolo/typer) CLI utility called `build_heterostructure`:
+The installation exposes a multi-level [typer](https://github.com/tiangolo/typer) CLI utility called `hetbuilder`:
 
 ```bash
-build_heterostructure --help
+hetbuilder --help
 ```
 
+The `build` utility is fully implemented.
 You can use any ASE-readable structure format to specify the lower and upper layer. They should be recognizable as two-dimensional, e.g., by having a zero vector in the *z*-direction.
 
 ```bash
-build_heterostructure graphene.xyz MoS2.cif
+hetbuilder build graphene.xyz MoS2.cif
 ```
 
 This should open a [matplotlib](https://matplotlib.org/) interface looking like this:

@@ -104,7 +104,7 @@ After the set $S(\theta)$ is reduced, the atomic supercell configurations are ge
    - they have the same number of atoms
    - they yield the same area
 
-## Definition of the Stress Measure
+# Definition of the Stress Measure
 
 Dropping the index $i$, one can define the target transformation matrices:
 
