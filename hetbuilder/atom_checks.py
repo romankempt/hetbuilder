@@ -207,6 +207,7 @@ def check_atoms(atoms: "ase.atoms.Atoms") -> "ase.atoms.Atoms":
     cell = atoms.cell.copy()
     zerovecs = np.where(~cell.any(axis=1))[0]
     is_2d = False
+    is_3d = False
     if len(zerovecs) == 3:
         logger.warning("You cannot specify 0D molecules as structure input.")
     elif len(zerovecs) == 2:
