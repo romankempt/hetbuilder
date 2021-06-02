@@ -10,7 +10,10 @@ Builds 2D heterostructure interfaces via coincidence lattice theory.
 
 ### Build-time dependencies
 
-Requires a C++17 compiler, [cmake](https://cmake.org/) at least with version 3.18.4, as well as [spglib](https://atztogo.github.io/spglib/python-spglib.html) and [pybind11](https://github.com/pybind/pybind11).
+Requires a C++17 compiler and [cmake](https://cmake.org/).
+
+It is also recommended to preinstall [spglib](https://atztogo.github.io/spglib/python-spglib.html) and [pybind11](https://github.com/pybind/pybind11).
+Otherwise these will be built a compile time.
 
 #### Installing with Anaconda
 
@@ -36,7 +39,7 @@ pip install git+https://github.com/romankempt/hetbuilder.git
 
 #### Installing with pip
 
-If you want to install with pip, it seems like need to build [spglib](https://atztogo.github.io/spglib/python-spglib.html) and [pybind11](https://github.com/pybind/pybind11) yourself. The header files and the `libsymspg.a` library are not provided by pypi.
+PyPI does not provide the library files of [spglib](https://atztogo.github.io/spglib/python-spglib.html). These will be built from the submodules at installation time, which might be time-consuming.
 
 On Unix, you can install a `cxx-compiler` with:
 ```bash
@@ -58,6 +61,10 @@ You can use any ASE-readable structure format to specify the lower and upper lay
 ```bash
 hetbuilder build graphene.xyz MoS2.cif
 ```
+
+This should open a [matplotlib](https://matplotlib.org/) interface looking like this:
+
+![](pictures/interface.png)
 
 ## Documentation
 

@@ -37,7 +37,7 @@ int2dvec_t CoincidenceAlgorithm::find_coincidences(double2dvec_t &A, double2dvec
             {
                 for (int l = -Nmax; l < (Nmax + 1); l++)
                 {
-                    if ((std::abs(i) > Nmin) && (std::abs(j) > Nmin) && (std::abs(k) > Nmin) && (std::abs(l) > Nmin))
+                    if ((std::abs(i) >= Nmin) && (std::abs(j) >= Nmin) && (std::abs(k) >= Nmin) && (std::abs(l) >= Nmin))
                     {
                         int1dvec_t vecM = {i, j};
                         int1dvec_t vecN = {k, l};

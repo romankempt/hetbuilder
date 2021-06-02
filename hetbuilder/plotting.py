@@ -57,7 +57,7 @@ def plot_grid(
     # axes.scatter(points[:, 0], points[:, 1], **kwargs)
     axes.axline(0 * a1, 1 * a1, **kwargs)
     axes.axline(0 * a2, 1 * a2, **kwargs)
-    for n in range(-Nmax, Nmax):
+    for n in range(-Nmax, Nmax + 1):
         if n != 0:
             axes.axline(n * a1 + 0 * a2, n * a1 + n * a2, **kwargs)
             axes.axline(0 * a1 + n * a2, n * a1 + n * a2, **kwargs)
