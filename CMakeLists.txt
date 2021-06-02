@@ -38,8 +38,6 @@ find_package(pybind11 CONFIG)
 if(NOT pybind11_FOUND)
     message("-- Could not find an installation of pybind11.")
     message("-- Linking to submodule instead.")
-    execute_process(COMMAND git submodule update --init -- external/pybind11
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     add_subdirectory(${PROJECT_SOURCE_DIR}/external/pybind11)
 endif()
 
@@ -50,8 +48,6 @@ find_library(SPGLIB symspg libsymspg libsymspg.a ${Python3_LIBRARY})
 if(NOT SPGLIB)
     message("-- Could not find an installation of the space group library (spglib).")
     message("-- Building from submodule instead. This might take a while.")
-    execute_process(COMMAND git submodule update --init -- external/spglib
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     set(SPGLIB_SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/spglib)    
     add_subdirectory(${SPGLIB_SOURCE_DIR})    
     target_include_directories(${TARGET} PRIVATE ${SPGLIB_SOURCE_DIR}/src)
