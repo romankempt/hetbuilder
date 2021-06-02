@@ -202,7 +202,6 @@ class CoincidenceAlgorithm:
         angles = check_angles(
             angle_limits=angle_limits, angle_stepsize=angle_stepsize, angles=angles
         )
-
         if (self.bottom == self.top) and (0 in angles):
             logger.warning("The bottom and top structure seem to be identical.")
             logger.warning(

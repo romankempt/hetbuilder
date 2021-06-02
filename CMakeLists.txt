@@ -14,6 +14,9 @@ file(GLOB SOURCES
     ${PROJECT_SOURCE_DIR}/backend/*.cpp
 )
 
+# target name
+set(TARGET hetbuilder_backend)
+
 if((NOT CMAKE_BUILD_TYPE) OR (CMAKE_BUILD_TYPE MATCHES RELEASE))
     set(CMAKE_BUILD_TYPE RELEASE)
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
@@ -30,12 +33,31 @@ message("-- CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 find_package(Python3 COMPONENTS Interpreter Development)
 include_directories(${Python3_INCLUDE_DIRS})
 
-# looking for spglib
-find_library(SPGLIB symspg libsymspg libsymspg.a ${Python3_LIBRARY} REQUIRED)
+# looking for pybind11
+find_package(pybind11 CONFIG)
+if(NOT pybind11_FOUND)
+    message("-- Could not find an installation of pybind11.")
+    message("-- Linking to submodule instead.")
+    execute_process(COMMAND git submodule update --init -- external/pybind11
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    add_subdirectory(${PROJECT_SOURCE_DIR}/external/pybind11)
+endif()
+
+pybind11_add_module(${TARGET} ${PROJECT_SOURCE_DIR}/backend/pybindings.cpp ${SOURCES})
+
+#looking for spglib
+find_library(SPGLIB symspg libsymspg libsymspg.a ${Python3_LIBRARY})
 if(NOT SPGLIB)
-  message(FATAL_ERROR "Could not find an installation of the space group library (spglib).")
+    message("-- Could not find an installation of the space group library (spglib).")
+    message("-- Building from submodule instead. This might take a while.")
+    execute_process(COMMAND git submodule update --init -- external/spglib
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    set(SPGLIB_SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/spglib)    
+    add_subdirectory(${SPGLIB_SOURCE_DIR})    
+    target_include_directories(${TARGET} PRIVATE ${SPGLIB_SOURCE_DIR}/src)
+    set(SPGLIB symspg)
 else()
-   message("-- Found spglib ${SPGLIB}")
+    message("-- Found spglib ${SPGLIB}")
 endif()
 
 # looking for OpenMP
@@ -44,9 +66,6 @@ if(USE_OPENMP)
   find_package(OpenMP 4.5 REQUIRED)
 endif()
 
-find_package(pybind11 CONFIG REQUIRED)
-pybind11_add_module(hetbuilder_backend ${PROJECT_SOURCE_DIR}/backend/pybindings.cpp ${SOURCES})
-
-target_link_libraries(hetbuilder_backend PRIVATE ${Python3_LIBRARY} OpenMP::OpenMP_CXX ${SPGLIB})
+target_link_libraries(${TARGET} PRIVATE ${Python3_LIBRARY} OpenMP::OpenMP_CXX ${SPGLIB})
 
 
