@@ -1,2 +1,4 @@
 include backend/*
 include CMakeLists.txt
+include external/spglib/*
+include external/pybind11/*
