@@ -1,4 +1,6 @@
-include backend/*
+recursive-include backend *.h *.cpp
 include CMakeLists.txt
 include external/spglib/*
+recursive-include external/spglib/src *.h *.cpp *.c
 include external/pybind11/*
+recursive-include external/pybind11/include *.h *.cpp *.c
