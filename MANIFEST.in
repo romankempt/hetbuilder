@@ -4,3 +4,5 @@ include external/spglib/*
 recursive-include external/spglib/src *.h *.cpp *.c
 include external/pybind11/*
 recursive-include external/pybind11/include *.h *.cpp *.c
+recursive-include external/pybind11/pybind11 *
+recursive-include external/pybind11/tools *

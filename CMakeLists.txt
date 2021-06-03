@@ -57,17 +57,39 @@ if(NOT pybind11_FOUND)
     add_subdirectory(${PROJECT_SOURCE_DIR}/external/pybind11)
 endif()
 
-pybind11_add_module(${TARGET} ${PROJECT_SOURCE_DIR}/backend/pybindings.cpp ${SOURCES})
+pybind11_add_module(${TARGET} MODULE ${PROJECT_SOURCE_DIR}/backend/pybindings.cpp ${SOURCES})
 
 #looking for spglib
 find_library(SPGLIB symspg libsymspg libsymspg.a ${Python3_LIBRARY})
 if(NOT SPGLIB)
     message("-- Could not find an installation of the space group library (spglib).")
     message("-- Building from submodule instead. This might take a while.")
-    set(SPGLIB_SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/spglib)    
-    add_subdirectory(${SPGLIB_SOURCE_DIR})    
+    set(SPGLIB_SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/spglib)
+    set(SPGLIB_SOURCES ${SPGLIB_SOURCE_DIR}/src/arithmetic.c
+        ${SPGLIB_SOURCE_DIR}/src/cell.c
+        ${SPGLIB_SOURCE_DIR}/src/debug.c
+        ${SPGLIB_SOURCE_DIR}/src/delaunay.c
+        ${SPGLIB_SOURCE_DIR}/src/determination.c
+        ${SPGLIB_SOURCE_DIR}/src/hall_symbol.c
+        ${SPGLIB_SOURCE_DIR}/src/kgrid.c
+        ${SPGLIB_SOURCE_DIR}/src/kpoint.c
+        ${SPGLIB_SOURCE_DIR}/src/mathfunc.c
+        ${SPGLIB_SOURCE_DIR}/src/niggli.c
+        ${SPGLIB_SOURCE_DIR}/src/overlap.c
+        ${SPGLIB_SOURCE_DIR}/src/pointgroup.c
+        ${SPGLIB_SOURCE_DIR}/src/primitive.c
+        ${SPGLIB_SOURCE_DIR}/src/refinement.c
+        ${SPGLIB_SOURCE_DIR}/src/site_symmetry.c
+        ${SPGLIB_SOURCE_DIR}/src/sitesym_database.c
+        ${SPGLIB_SOURCE_DIR}/src/spacegroup.c
+        ${SPGLIB_SOURCE_DIR}/src/spg_database.c
+        ${SPGLIB_SOURCE_DIR}/src/spglib.c
+        ${SPGLIB_SOURCE_DIR}/src/spin.c
+        ${SPGLIB_SOURCE_DIR}/src/symmetry.c)
+
+    add_library(hetbuildersymspg OBJECT ${SPGLIB_SOURCES})
     target_include_directories(${TARGET} PRIVATE ${SPGLIB_SOURCE_DIR}/src)
-    set(SPGLIB symspg)
+    set(SPGLIB hetbuildersymspg)
 else()
     message("-- Found spglib ${SPGLIB}")
 endif()
