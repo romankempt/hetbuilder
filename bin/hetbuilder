@@ -56,8 +56,8 @@ def callback(
 )
 def build(
     ctx: typer.Context,
-    bottom: Path = typer.Argument(..., help="Path to lower layer structure file."),
-    top: Path = typer.Argument(..., help="Path to upper layer structure file."),
+    lower: Path = typer.Argument(..., help="Path to lower layer structure file."),
+    upper: Path = typer.Argument(..., help="Path to upper layer structure file."),
     Nmax: int = typer.Option(
         10, "-N", "--Nmax", help="Maximum number of translations."
     ),
@@ -111,8 +111,8 @@ def build(
         hetbuilder build graphene.xyz MoS2.xyz -N 10 -al 0 30 -as 0.1
     """
     set_verbosity_level(verbosity)
-    bottom = ase.io.read(bottom)
-    top = ase.io.read(top)
+    bottom = ase.io.read(lower)
+    top = ase.io.read(upper)
     logger.info(
         "Building heterostructures from {} and {}.".format(
             bottom.get_chemical_formula(), top.get_chemical_formula()
@@ -146,30 +146,40 @@ def build(
     ),
 )
 def match(
-    bottom: Path = typer.Argument(..., help="Path to lower layer structure file."),
-    top: Path = typer.Argument(..., help="Path to upper layer structure file."),
+    lower: Path = typer.Argument(..., help="Path to lower layer structure file."),
+    upper: Path = typer.Argument(..., help="Path to upper layer structure file."),
+    verbosity: int = typer.Option(
+        0, "--verbosity", "-v", count=True, help="Set verbosity level."
+    ),
 ):
-    bottom = ase.io.read(bottom)
-    top = ase.io.read(top)
+    """Matches two structures to find lowest-stress coincidence lattice.
+    
+    Example:
+        hetbuilder match graphene.xyz MoS2.xyz
+    """
+    bottom = ase.io.read(lower)
+    top = ase.io.read(upper)
     logger.info(
         "Building heterostructure from {} and {}.".format(
             bottom.get_chemical_formula(), top.get_chemical_formula()
         )
     )
     alg = CoincidenceAlgorithm(bottom, top)
-    set_verbosity_level(3)
+    set_verbosity_level(verbosity)
     stepsize = 5
     maximum = 26
-    ranges = list(range(1, maximum, stepsize))
+    ranges = list(range(0, maximum, stepsize))
     angles = list(range(0, 91, 1))
-    max_tolerance = 0.2
-    tolerance_stepsize = 0.05
-    distance = 4
-    stresses = []
 
-    for i, (Nmin, Nmax) in enumerate(
-        list(zip(ranges, ranges[1:] + [max(ranges) + stepsize]))
+    def circle_loop(
+        tolerance_stepsize=0.05,
+        max_tolerance=0.2,
+        stepsize=5,
+        ranges=ranges,
+        distance=4,
+        angles=angles,
     ):
+        # outer loop over different tolerances
         for j, t in enumerate(
             np.arange(
                 tolerance_stepsize,
@@ -177,22 +187,39 @@ def match(
                 tolerance_stepsize,
             )
         ):
-            r = alg.run(
-                Nmax=Nmax,
-                Nmin=Nmin,
-                angles=angles,
-                tolerance=t,
-                distance=distance,
-                no_idealize=False,
-                symprec=1e-6,
-                angle_tolerance=5,
-            )
-            if r is not None:
-                stress, idx = min(
-                    (val, idx) for (idx, val) in enumerate([k.stress for k in r])
+            # inner loop over Ns
+            interfaces = []
+            logger.info("Checking for tolerance {:.2f} ...".format(t))
+            for i, (Nmin, Nmax) in enumerate(
+                list(zip(ranges, ranges[1:] + [max(ranges) + stepsize]))
+            ):
+                logger.info(
+                    "Checking for Nmin {:d} and Nmax {:d} ...".format(Nmin, Nmax)
                 )
-                stresses.append(stress)
-    # have to think how to best break out of the search
+                r = alg.run(
+                    Nmax=Nmax,
+                    Nmin=Nmin,
+                    angles=angles,
+                    tolerance=t,
+                    distance=distance,
+                    no_idealize=False,
+                    symprec=1e-6,
+                    angle_tolerance=5,
+                )
+                if r is not None:
+                    stresses = [k.stress for k in r]
+                    idx = stresses.index(min(stresses))
+                    interfaces.append(r[idx])
+                    break
+            if len(interfaces) > 0:
+                stresses = [k.stress for k in interfaces]
+                idx = stresses.index(min(stresses))
+                intf = interfaces[idx]
+                set_verbosity_level(2)
+                logger.info("Found coincidence structure: {}".format(intf))
+                return intf
+
+    interface = circle_loop()
 
 
 if __name__ == "__main__":
