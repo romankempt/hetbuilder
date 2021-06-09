@@ -148,12 +148,42 @@ def build(
 def match(
     lower: Path = typer.Argument(..., help="Path to lower layer structure file."),
     upper: Path = typer.Argument(..., help="Path to upper layer structure file."),
+    Nmax: int = typer.Option(
+        10, "-N", "--Nmax", help="Maximum number of translations."
+    ),
+    Nmin: int = typer.Option(0, "--Nmin", help="Minimum number of translations."),
+    angles: List[float] = typer.Option(
+        [],
+        "-a",
+        "--angle",
+        help="Explicitely set angle to look for. Can be called multiple times.",
+    ),
+    weight: float = typer.Option(
+        0.5,
+        "-w",
+        "--weight",
+        help="Weight of the coincidence unit cell, given by C=A+weight*(B-A).",
+    ),
+    distance: float = typer.Option(
+        4, "-d", "--distance", help="Interlayer distance of the heterostructure."
+    ),
+    no_idealize: bool = typer.Option(
+        False, "--no_idealize", help="Disable idealize lattice parameters via spglib."
+    ),
+    symprec: float = typer.Option(
+        1e-5, "-sp", "--symprec", help="Symmetry precision for spglib."
+    ),
+    angle_tolerance: float = typer.Option(
+        5, "--angle_tolerance", help="Angle tolerance for spglib."
+    ),
     verbosity: int = typer.Option(
         0, "--verbosity", "-v", count=True, help="Set verbosity level."
     ),
 ):
     """Matches two structures to find lowest-stress coincidence lattice.
     
+    Automatically checks different tolerance values.
+
     Example:
         hetbuilder match graphene.xyz MoS2.xyz
     """
@@ -166,19 +196,20 @@ def match(
     )
     alg = CoincidenceAlgorithm(bottom, top)
     set_verbosity_level(verbosity)
-    stepsize = 5
-    maximum = 26
-    ranges = list(range(0, maximum, stepsize))
-    angles = list(range(0, 91, 1))
+    if angles == []:
+        angles = list(range(0, 91, 1))
 
     def circle_loop(
         tolerance_stepsize=0.05,
         max_tolerance=0.2,
-        stepsize=5,
-        ranges=ranges,
-        distance=4,
+        distance=distance,
         angles=angles,
+        no_idealize=no_idealize,
+        symprec=symprec,
+        angle_tolerance=angle_tolerance,
+        weight=weight,
     ):
+        interfaces = []
         # outer loop over different tolerances
         for j, t in enumerate(
             np.arange(
@@ -187,39 +218,41 @@ def match(
                 tolerance_stepsize,
             )
         ):
-            # inner loop over Ns
-            interfaces = []
             logger.info("Checking for tolerance {:.2f} ...".format(t))
-            for i, (Nmin, Nmax) in enumerate(
-                list(zip(ranges, ranges[1:] + [max(ranges) + stepsize]))
-            ):
-                logger.info(
-                    "Checking for Nmin {:d} and Nmax {:d} ...".format(Nmin, Nmax)
-                )
-                r = alg.run(
-                    Nmax=Nmax,
-                    Nmin=Nmin,
-                    angles=angles,
-                    tolerance=t,
-                    distance=distance,
-                    no_idealize=False,
-                    symprec=1e-6,
-                    angle_tolerance=5,
-                )
-                if r is not None:
-                    stresses = [k.stress for k in r]
-                    idx = stresses.index(min(stresses))
-                    interfaces.append(r[idx])
-                    break
-            if len(interfaces) > 0:
-                stresses = [k.stress for k in interfaces]
+            r = alg.run(
+                Nmax=Nmax,
+                Nmin=Nmin,
+                angles=angles,
+                tolerance=t,
+                distance=distance,
+                no_idealize=no_idealize,
+                symprec=symprec,
+                angle_tolerance=angle_tolerance,
+                weight=weight,
+            )
+            if r is not None:
+                stresses = [k.stress for k in r]
                 idx = stresses.index(min(stresses))
-                intf = interfaces[idx]
-                set_verbosity_level(2)
-                logger.info("Found coincidence structure: {}".format(intf))
-                return intf
+                interfaces.append(r[idx])
+                break
+        if len(interfaces) > 0:
+            stresses = [k.stress for k in interfaces]
+            idx = stresses.index(min(stresses))
+            intf = interfaces[idx]
+            set_verbosity_level(2)
+            logger.info("Found coincidence structure: {}".format(intf))
+            return intf
+        else:
+            logger.critical("Could not find any matching unit cells.")
+            return None
 
     interface = circle_loop()
+    atoms = interface.stack.copy()
+    name = atoms.get_chemical_formula() + "_angle{:.2f}_stress{:.2f}.xyz".format(
+        interface.angle, interface.stress
+    )
+    logger.info(f"Writing structure to {name} ...")
+    atoms.write(name)
 
 
 if __name__ == "__main__":
