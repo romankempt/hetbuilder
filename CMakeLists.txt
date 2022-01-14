@@ -32,6 +32,7 @@ message("-- CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 # looking for python
 find_package(Python3 COMPONENTS Interpreter Development)
 include_directories(${Python3_INCLUDE_DIRS})
+message("-- Found Python3 header files ${Python3_INCLUDE_DIRS}")
 
 # looking for git
 find_package(Git QUIET)
@@ -64,8 +65,9 @@ pybind11_add_module(${TARGET} MODULE ${PROJECT_SOURCE_DIR}/backend/pybindings.cp
 #find_library(SPGLIB symspg libsymspg libsymspg.a ${Python3_LIBRARY})
 set(SPGLIB False)
 if(NOT SPGLIB)
-    message("-- Could not find an installation of the space group library (spglib).")
-    message("-- Building from submodule instead. This might take a while.")
+    #message("-- Could not find an installation of the space group library (spglib).")
+    #message("-- Building from submodule instead. This might take a while.")
+    message("-- Building spglib from submodule.")
     set(SPGLIB_SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/spglib)
     set(SPGLIB_SOURCES ${SPGLIB_SOURCE_DIR}/src/arithmetic.c
         ${SPGLIB_SOURCE_DIR}/src/cell.c
