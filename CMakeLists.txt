@@ -92,6 +92,7 @@ if(NOT SPGLIB)
         ${SPGLIB_SOURCE_DIR}/src/symmetry.c)
 
     add_library(hetbuildersymspg OBJECT ${SPGLIB_SOURCES})
+    add_dependencies(${TARGET} hetbuildersymspg)
     target_include_directories(${TARGET} PRIVATE ${SPGLIB_SOURCE_DIR}/src)
     set(SPGLIB hetbuildersymspg)
 else()
