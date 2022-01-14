@@ -55,7 +55,7 @@ The installation exposes a multi-level [typer](https://github.com/tiangolo/typer
 hetbuilder --help
 ```
 
-The `build` utility is fully implemented.
+The `build` utility exposes the results interactively via a matplotlib GUI.
 You can use any ASE-readable structure format to specify the lower and upper layer. They should be recognizable as two-dimensional, e.g., by having a zero vector in the *z*-direction.
 
 ```bash

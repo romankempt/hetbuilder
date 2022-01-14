@@ -26,6 +26,8 @@ ncombs = [
     1600000000,
 ]
 
+scaling = [k / timings[0] for k in timings]
+
 fig, axes = plt.subplots(1, 1, figsize=(5, 5))
 axes.scatter(ncombs, timings, color="tab:red")
 axes.plot(ncombs, timings, color="tab:blue")
@@ -33,8 +35,8 @@ axes.plot(ncombs, timings, color="tab:blue")
 axes.set_xlim(min(ncombs) * 0.95, max(ncombs) * 1.05)
 axes.set_ylim(-1, max(timings) * 1.05)
 axes.set_xscale("log")
-axes.set_xlabel("log(Number of grid points)")
-axes.set_ylabel("Execution time in seconds")
-axes.set_title("Scaling with respect to $N_{max}$")
+axes.set_xlabel(r"$((2 \cdot (N_{max} - N_{min})))^4) * N_{angles})$")
+axes.set_ylabel("Time scaling factor")
+axes.set_title("Scaling with respect to grid points")
 
 plt.show()

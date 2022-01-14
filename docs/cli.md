@@ -65,3 +65,13 @@ Changing the weight factor $w$ only affects the final coincidence supercells, no
 ```bash
 hetbuilder build a.xyz b.xyz -w 0
 ```
+
+## The `match` utility
+
+The `match` utility only looks for the smallest stress result from the algorithm and writes it to a file.
+
+```bash
+hetbuilder match --help
+```
+
+The syntax is similar to the `build` utility. The algorithm is executed automatically for different tolerance values.

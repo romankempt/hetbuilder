@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18.4)
+cmake_minimum_required(VERSION 3.18.2)
 
 # set the project name
 project(hetbuilder)
@@ -7,7 +7,7 @@ message("-- Project source directory: ${PROJECT_SOURCE_DIR}")
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17 -fopenmp")
+
 
 # specify sources
 file(GLOB SOURCES    
@@ -60,7 +60,9 @@ endif()
 pybind11_add_module(${TARGET} MODULE ${PROJECT_SOURCE_DIR}/backend/pybindings.cpp ${SOURCES})
 
 #looking for spglib
-find_library(SPGLIB symspg libsymspg libsymspg.a ${Python3_LIBRARY})
+
+#find_library(SPGLIB symspg libsymspg libsymspg.a ${Python3_LIBRARY})
+set(SPGLIB False)
 if(NOT SPGLIB)
     message("-- Could not find an installation of the space group library (spglib).")
     message("-- Building from submodule instead. This might take a while.")
@@ -95,11 +97,25 @@ else()
 endif()
 
 # looking for OpenMP
-option(USE_OPENMP "build OpenMP programs with OpenMP support enabled" ON)
+option(USE_OPENMP "Build with OpenMP support" ON)
 if(USE_OPENMP)
-  find_package(OpenMP 4.5 REQUIRED)
+    find_package(OpenMP 4.5)
+    if(OPENMP_FOUND)
+        message("-- Found OpenMP ${OPENMP}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -std=gnu++17")    
+        target_link_libraries(${TARGET} 
+                                PRIVATE ${Python3_LIBRARY} 
+                                PRIVATE OpenMP::OpenMP_CXX 
+                                PRIVATE ${SPGLIB})
+    else()
+        message("-- Could not find OpenMP")
+    endif()
+else()
+    message("-- Building without OpenMP")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
+    target_link_libraries(${TARGET} 
+                            PRIVATE     ${Python3_LIBRARY}
+                            PRIVATE     ${SPGLIB})
 endif()
-
-target_link_libraries(${TARGET} PRIVATE ${Python3_LIBRARY} OpenMP::OpenMP_CXX ${SPGLIB})
 
 
