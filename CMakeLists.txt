@@ -8,10 +8,13 @@ message("-- Project source directory: ${PROJECT_SOURCE_DIR}")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+if(SKBUILD)
+  message(STATUS "The project is built using scikit-build")
+endif()
 
 # specify sources
 file(GLOB SOURCES    
-    ${PROJECT_SOURCE_DIR}/backend/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/backend/*.cpp
 )
 
 # target name
@@ -52,23 +55,21 @@ endif()
 
 # looking for pybind11
 find_package(pybind11 CONFIG)
-if(NOT pybind11_FOUND)
+if(NOT pybind11_FOUND OR (${CMAKE_BUILD_TYPE} STREQUAL DEBUG))
     message("-- Could not find an installation of pybind11.")
     message("-- Linking to submodule instead.")
-    add_subdirectory(${PROJECT_SOURCE_DIR}/external/pybind11)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/pybind11)
 endif()
 
-pybind11_add_module(${TARGET} MODULE ${PROJECT_SOURCE_DIR}/backend/pybindings.cpp ${SOURCES})
+pybind11_add_module(${TARGET} MODULE ${CMAKE_CURRENT_SOURCE_DIR}/backend/pybindings.cpp ${SOURCES})
 
 #looking for spglib
-
-#find_library(SPGLIB symspg libsymspg libsymspg.a ${Python3_LIBRARY})
-set(SPGLIB False)
-if(NOT SPGLIB)
-    #message("-- Could not find an installation of the space group library (spglib).")
-    #message("-- Building from submodule instead. This might take a while.")
+find_library(SPGLIB symspg libsymspg libsymspg.a ${Python3_LIBRARY})
+if(NOT SPGLIB OR (${CMAKE_BUILD_TYPE} STREQUAL DEBUG))
+    message("-- Could not find an installation of the space group library (spglib).")
     message("-- Building spglib from submodule.")
-    set(SPGLIB_SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/spglib)
+
+    set(SPGLIB_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/spglib)
     set(SPGLIB_SOURCES ${SPGLIB_SOURCE_DIR}/src/arithmetic.c
         ${SPGLIB_SOURCE_DIR}/src/cell.c
         ${SPGLIB_SOURCE_DIR}/src/debug.c
@@ -121,4 +122,7 @@ else()
                             PRIVATE     ${SPGLIB})
 endif()
 
+install(TARGETS ${TARGET} LIBRARY DESTINATION .)
 
+# Quiet a warning, since this project is only valid with SKBUILD
+set(ignoreMe "${SKBUILD}")

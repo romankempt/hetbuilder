@@ -11,8 +11,8 @@ import time
 
 
 def test_scaling_performance():
-    bottom = ase.io.read(PROJECT_ROOT_DIR.joinpath("../tests/MoS2_2H_1l.xyz"))
-    top = ase.io.read(PROJECT_ROOT_DIR.joinpath("../tests/WS2_2H_1l.xyz"))
+    bottom = ase.io.read(PROJECT_ROOT_DIR.joinpath("/tests/MoS2_2H_1l.xyz"))
+    top = ase.io.read(PROJECT_ROOT_DIR.joinpath("/tests/WS2_2H_1l.xyz"))
     alg = CoincidenceAlgorithm(bottom, top)
     timings = []
     ncombs = []

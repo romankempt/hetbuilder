@@ -10,7 +10,7 @@ from scipy.linalg import polar
 from hetbuilder.log import *
 from hetbuilder.atom_checks import check_atoms, recenter
 
-from hetbuilder_backend import (
+from hetbuilder.hetbuilder_backend import (
     double2dVector,
     double1dVector,
     int1dVector,

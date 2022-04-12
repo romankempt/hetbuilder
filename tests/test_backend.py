@@ -7,7 +7,7 @@ from pathlib import Path
 from hetbuilder import PROJECT_ROOT_DIR
 from hetbuilder.algorithm import cpp_atoms_to_ase_atoms, ase_atoms_to_cpp_atoms
 
-from hetbuilder_backend import (
+from hetbuilder.hetbuilder_backend import (
     double2dVector,
     double1dVector,
     int1dVector,
@@ -26,9 +26,9 @@ from ase.utils.structure_comparator import SymmetryEquivalenceCheck
 
 def test_backend_supercell():
     for i in [
-        "../tests/MoS2_2H_1l.xyz",
-        "../tests/WS2_2H_1l.xyz",
-        "../tests/graphene.xyz",
+        "tests/MoS2_2H_1l.xyz",
+        "tests/WS2_2H_1l.xyz",
+        "tests/graphene.xyz",
     ]:
         atoms = ase.io.read(PROJECT_ROOT_DIR.joinpath(i))
         cppatoms = ase_atoms_to_cpp_atoms(atoms)
@@ -47,9 +47,9 @@ def test_backend_supercell():
 
 def test_spglib_standardize():
     for i in [
-        "../tests/MoS2_2H_1l.xyz",
-        "../tests/WS2_2H_1l.xyz",
-        "../tests/graphene.xyz",
+        "tests/MoS2_2H_1l.xyz",
+        "tests/WS2_2H_1l.xyz",
+        "tests/graphene.xyz",
     ]:
         atoms = ase.io.read(PROJECT_ROOT_DIR.joinpath(i))
         N = [[3, 1, 0], [-1, 2, 0], [0, 0, 1]]
