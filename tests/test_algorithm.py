@@ -9,8 +9,8 @@ import numpy as np
 
 
 def test_coincidence_algorithm():
-    bottom = ase.io.read(PROJECT_ROOT_DIR.joinpath("../tests/MoS2_2H_1l.xyz"))
-    top = ase.io.read(PROJECT_ROOT_DIR.joinpath("../tests/WS2_2H_1l.xyz"))
+    bottom = ase.io.read(PROJECT_ROOT_DIR.joinpath("/tests/MoS2_2H_1l.xyz"))
+    top = ase.io.read(PROJECT_ROOT_DIR.joinpath("/tests/WS2_2H_1l.xyz"))
     alg = CoincidenceAlgorithm(bottom, top)
     results = alg.run(Nmin=0, Nmax=5, angles=[0, 10, 20, 30], tolerance=0.1)
     assert results is not None, "Found no results at all."

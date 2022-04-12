@@ -1,18 +1,9 @@
 #!/usr/bin/env python
-import os
 import re
-import sys
-import sysconfig
-import platform
-import subprocess
+from setuptools import find_packages
 from pathlib import Path
-
-from distutils.version import LooseVersion
-from setuptools import setup, Extension, find_packages
-from setuptools.command.build_ext import build_ext
-from setuptools.command.test import test as TestCommand
-
-import re
+import os
+import sys
 
 VERSIONFILE = "hetbuilder/__init__.py"
 verstrline = open(VERSIONFILE, "rt").read()
@@ -24,49 +15,18 @@ else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
 
-# A CMakeExtension needs a sourcedir instead of a file list.
-# The name must be the _single_ output extension from the CMake build.
-# If you need multiple extensions, see scikit-build.
-class CMakeExtension(Extension):
-    def __init__(self, name, sourcedir="."):
-        Extension.__init__(self, name, sources=[])
-        self.sourcedir = os.path.abspath(sourcedir)
+try:
+    import skbuild
+    from skbuild import setup
+except ImportError:
+    print(
+        "Please update pip, you need pip 10 or greater,\n"
+        " or you need to install the PEP 518 requirements in pyproject.toml yourself",
+        file=sys.stderr,
+    )
+    raise
 
-
-class CMakeBuild(build_ext):
-    def build_extension(self, ext):
-        extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
-
-        # required for auto-detection of auxiliary "native" libs
-        if not extdir.endswith(os.path.sep):
-            extdir += os.path.sep
-
-        cfg = "DEBUG" if self.debug else "RELEASE"
-
-        # CMake lets you override the generator - we need to check this.
-        # Can be set with Conda-Build, for example.
-        cmake_generator = os.environ.get("CMAKE_GENERATOR", "")
-
-        # Set Python_EXECUTABLE instead if you use PYBIND11_FINDPYTHON
-        # EXAMPLE_VERSION_INFO shows you how to pass a value into the C++ code
-        # from Python.
-        cmake_args = [
-            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}".format(extdir),
-            "-DPYTHON_EXECUTABLE={}".format(sys.executable),
-            "-DEXAMPLE_VERSION_INFO={}".format(self.distribution.get_version()),
-            "-DCMAKE_BUILD_TYPE={}".format(cfg),  # not used on MSVC, but no harm
-        ]
-        build_args = []
-
-        if not os.path.exists(self.build_temp):
-            os.makedirs(self.build_temp)
-
-        subprocess.check_call(
-            ["cmake", ext.sourcedir] + cmake_args, cwd=self.build_temp
-        )
-        subprocess.check_call(
-            ["cmake", "--build", "."] + build_args, cwd=self.build_temp
-        )
+print("Scikit-build version:", skbuild.__version__)
 
 
 # read the contents of your README file
@@ -88,6 +48,9 @@ setup(
     download_url="https://github.com/romankempt/hetbuilder.git",
     packages=find_packages(),
     package_data={"": ["*.xyz", "CMakeLists.txt"]},
+    # package_dir={"": ""},
+    cmake_install_dir="hetbuilder",
+    include_package_data=True,
     scripts=["bin/hetbuilder"],
     install_requires=[
         "numpy",
@@ -108,7 +71,8 @@ setup(
         "Topic :: Scientific/Engineering :: Chemistry",
         "Topic :: Scientific/Engineering :: Physics",
     ],
-    ext_modules=[CMakeExtension("hetbuilder_backend")],
-    cmdclass={"build_ext": CMakeBuild},
-    zip_safe=True,
+    cmake_args=[
+        "-DCMAKE_BUILD_TYPE={}".format("RELEASE"),  # not used on MSVC, but no harm,
+    ],
+    zip_safe=False,
 )

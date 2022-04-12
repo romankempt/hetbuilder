@@ -24,7 +24,7 @@ conda env create -n hetbuilder python=3.9
 
 Then install the build-time dependencies first:
 ```bash
-conda install -c conda-forge cxx-compiler git pip cmake spglib pybind11
+conda install -c conda-forge compilers git pip cmake spglib pybind11
 ```
 
 Then, you can install the project from pip:
@@ -36,16 +36,6 @@ If that does not work, try directly installing from git:
 ```bash
 pip install git+https://github.com/romankempt/hetbuilder.git
 ```
-
-#### Installing with pip
-
-PyPI does not provide the library files of [spglib](https://atztogo.github.io/spglib/python-spglib.html). These will be built from the submodules at installation time, which might be time-consuming.
-
-On Unix, you can install a `cxx-compiler` with:
-```bash
-sudo apt install build-essential
-```
-
 
 ## First steps
 
