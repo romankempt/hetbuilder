@@ -1,7 +1,0 @@
-/mnt/c/Users/rkempt/Repositories/hetbuilder/_skbuild/linux-x86_64-3.9/cmake-build/CMakeFiles/install/strip.dir
-/mnt/c/Users/rkempt/Repositories/hetbuilder/_skbuild/linux-x86_64-3.9/cmake-build/CMakeFiles/install/local.dir
-/mnt/c/Users/rkempt/Repositories/hetbuilder/_skbuild/linux-x86_64-3.9/cmake-build/CMakeFiles/install.dir
-/mnt/c/Users/rkempt/Repositories/hetbuilder/_skbuild/linux-x86_64-3.9/cmake-build/CMakeFiles/list_install_components.dir
-/mnt/c/Users/rkempt/Repositories/hetbuilder/_skbuild/linux-x86_64-3.9/cmake-build/CMakeFiles/rebuild_cache.dir
-/mnt/c/Users/rkempt/Repositories/hetbuilder/_skbuild/linux-x86_64-3.9/cmake-build/CMakeFiles/edit_cache.dir
-/mnt/c/Users/rkempt/Repositories/hetbuilder/_skbuild/linux-x86_64-3.9/cmake-build/CMakeFiles/hetbuilder_backend.dir
