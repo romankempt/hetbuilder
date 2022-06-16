@@ -1,5 +1,6 @@
 #pragma once
 #include "math_functions.h"
+#include "xtalcomp.h"
 
 class Atoms
 {
@@ -37,4 +38,12 @@ public:
     void atomic_numbers_to_spglib_types(int arr[]);
 
     int standardize(int to_primitive = 1, int no_idealize = 0, double symprec = 1e-5, double angle_tolerance = 5.0);
+
+    XcMatrix lattice_to_xtalcomp_cell();
+
+    std::vector<unsigned int> atomic_numbers_to_xtalcomp_types();
+
+    std::vector<XcVector> positions_to_xtalcomp_positions();
+
+    bool xtalcomp_compare(Atoms &other);
 };

@@ -59,7 +59,6 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     endif()
 endif()
 
-
 #looking for spglib
 set(spglib_FOUND FALSE)
 if (NOT ${CMAKE_BUILD_TYPE} STREQUAL DEBUG)
@@ -74,7 +73,6 @@ else()
     message("-- Found spglib ${spglib}")    
 endif()
 
-
 # looking for pybind11
 set(pybind11_FOUND FALSE)
 if (NOT ${CMAKE_BUILD_TYPE} STREQUAL DEBUG)
@@ -88,6 +86,10 @@ endif()
 
 pybind11_add_module(${TARGET} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/backend/pybindings.cpp ${SOURCES})
 
+#adding XtalComp
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/XtalComp)
+target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/external/XtalComp)
+
 # looking for OpenMP
 option(USE_OPENMP "Build with OpenMP support" ON)
 if(USE_OPENMP)
@@ -97,6 +99,7 @@ if(USE_OPENMP)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -std=gnu++17")    
         target_link_libraries(${TARGET} 
                                 PRIVATE symspg
+                                PRIVATE XtalComp
                                 PRIVATE Python3::Python
                                 PRIVATE OpenMP::OpenMP_CXX                                 
                                 )
@@ -108,6 +111,7 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
     target_link_libraries(${TARGET} 
                             PRIVATE symspg
+                            PRIVATE XtalComp
                             PRIVATE Python3::Python
                             )
 endif()

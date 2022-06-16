@@ -16,11 +16,11 @@ typedef std::map<double, std::vector<CoincidencePairs>> angle_dict_t;
 
 /**
  * Solves the equation |Am - R(theta)Bn| < tolerance for a given angle theta.
- * 
+ *
  * The results are stored in a 2d vector of integers containing m1, m2, n1, n2.
- * OpenMP is employed to distribute the nested loops on threads, but an ordered construct 
- * has to be used to push back the vector for thread safety. 
- * 
+ * OpenMP is employed to distribute the nested loops on threads, but an ordered construct
+ * has to be used to push back the vector for thread safety.
+ *
  * The case of m1 = m2 = n1 = n2 is already removed, including the null vector.
  */
 int2dvec_t CoincidenceAlgorithm::find_coincidences(double2dvec_t &A, double2dvec_t &B, double &theta, int &Nmin, int &Nmax, double &tolerance)
@@ -76,9 +76,9 @@ int2dvec_t CoincidenceAlgorithm::find_coincidences(double2dvec_t &A, double2dvec
 
 /**
  * Constructs the independent pairs (m1,m2,m3,m4) and (n1,n2,n3,n4).
- * 
+ *
  * I'm not a 100 % sure if I should iterate over all i j or only j > i.
- * 
+ *
  * All pairs with an absolute greatest common divisor different from 1 are removed,
  * because they correspond to scalar multiples of other smaller super cells.
  */
@@ -130,7 +130,7 @@ int2dvec_t CoincidenceAlgorithm::find_unique_pairs(int2dvec_t &coincidences)
 
 /**
  * Reduces the number of unique pairs by filtering out the pairs with the same determinant.
- * 
+ *
  * Pairs with positive, symmetric entries are preferred.
  */
 angle_dict_t CoincidenceAlgorithm::reduce_unique_pairs(std::map<double, int2dvec_t> &AnglesMN)
@@ -162,11 +162,11 @@ angle_dict_t CoincidenceAlgorithm::reduce_unique_pairs(std::map<double, int2dvec
 
 /**
  * Builds all supercells, applying the supercell matrices M and N and the Rotation R(theta).
- * 
+ *
  * The unit cell of the stack (interface) is given bei C = A + weight * (B - A).
  * The interfaces are standardized via spglib for the given symprec and angle_tolerance.
  * The loop over the supecell generation and standardization is OpenMP parallel.
- * 
+ *
  * Returns a vector of interfaces.
  */
 std::vector<Interface> CoincidenceAlgorithm::build_all_supercells(Atoms &bottom, Atoms &top, angle_dict_t &AnglesMN,
@@ -201,15 +201,42 @@ std::vector<Interface> CoincidenceAlgorithm::build_all_supercells(Atoms &bottom,
 
 /**
  * Filters the interfaces.
- * 
+ *
  * Interfaces are considered equal if their spacegroup, area and number of atoms matches.
- * 
+ *
  * Returns a vector of interfaces.
  */
 std::vector<Interface> CoincidenceAlgorithm::filter_supercells(std::vector<Interface> &stacks)
 {
     std::set<Interface> s(stacks.begin(), stacks.end());
     std::vector<Interface> v(s.begin(), s.end());
+
+    return v;
+};
+
+/**
+ * Filters the interfaces.
+ *
+ * Interfaces removed if the stack is symmetry-equivalent to another. The check is performed with XtalComp.
+ *
+ * Returns a vector of interfaces.
+ */
+std::vector<Interface> CoincidenceAlgorithm::remove_duplicates_XtalComp(std::vector<Interface> &stacks)
+{
+    int index = 0;
+    std::vector<Interface> v;
+    for (int i = 0; i < stacks.size(); i++)
+    {
+
+        int j;
+        for (j = 0; j < i; j++)
+            if (stacks[i].stack.xtalcomp_compare(stacks[j].stack))
+                break;
+
+        // If not present, then add it to result.
+        if (j == i)
+            v.push_back(stacks[i]);
+    }
 
     return v;
 };
@@ -265,15 +292,18 @@ std::vector<Interface> CoincidenceAlgorithm::run(int Nmax,
     }
     else
     {
-        //std::cerr << "Could not find any coincidence pairs." << std::endl;
+        // std::cerr << "Could not find any coincidence pairs." << std::endl;
         return {};
     }
 
-    std::vector<Interface> fstacks;
     if (stacks.size() > 0)
     {
-        fstacks = filter_supercells(stacks);
+        // std::cout << "Size before first filter step: " << stacks.size() << std::endl;
+        stacks = filter_supercells(stacks);
+        // std::cout << "Size after first filter step: " << stacks.size() << std::endl;
+        stacks = remove_duplicates_XtalComp(stacks);
+        // std::cout << "Size after 2nd filter step: " << stacks.size() << std::endl;
     }
 
-    return fstacks;
+    return stacks;
 };

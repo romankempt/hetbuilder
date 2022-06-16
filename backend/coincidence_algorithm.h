@@ -10,7 +10,7 @@ typedef std::map<double, std::vector<CoincidencePairs>> angle_dict_t;
 
 /**
  * Class definition of the lattice coincidence algorithm.
- * 
+ *
  * Executed by the run() method.
  */
 class CoincidenceAlgorithm
@@ -35,6 +35,8 @@ public:
     std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, angle_dict_t &AnglesMN, double &weight, double &distance, int &no_idealize, double &symprec, double &angle_tolerance);
 
     std::vector<Interface> filter_supercells(std::vector<Interface> &stacks);
+
+    std::vector<Interface> remove_duplicates_XtalComp(std::vector<Interface> &stacks);
 
     std::vector<Interface> run(int cNmax = 10,
                                int cNmin = 0,

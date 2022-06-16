@@ -3,6 +3,7 @@
 #include "atom_class.h"
 
 #include "spglib.h"
+#include "xtalcomp.h"
 
 // Prints lattice, positions, scaled positions and atomic numbers of atoms object.
 void Atoms::print()
@@ -76,7 +77,7 @@ Atoms Atoms::operator+(const Atoms &b)
     return newAtoms;
 };
 
-// Helper function to convert double2dvec_t lattice to double array for spglib.
+// Helper function to convert double2dvec_t lattice to double array for spglib, which is transposed.
 void Atoms::lattice_to_spglib_array(double arr[3][3])
 {
     // transposition
@@ -84,7 +85,7 @@ void Atoms::lattice_to_spglib_array(double arr[3][3])
     {
         for (unsigned j = 0; (j < 3); j++)
         {
-            arr[j][i] = lattice[i][j];
+            arr[j][i] = this->lattice[i][j];
         }
     }
 };
@@ -102,7 +103,7 @@ void Atoms::positions_to_spglib_array(double arr[][3])
     }
 };
 
-// Helper function to convert int1dvec_t positions to int array for spglib.
+// Helper function to convert int1dvec_t atomic numbers to int array for spglib.
 void Atoms::atomic_numbers_to_spglib_types(int arr[])
 {
     for (unsigned i = 0; (i < this->numAtom); i++)
@@ -166,4 +167,56 @@ int Atoms::standardize(int to_primitive, int no_idealize, double symprec, double
     }
 
     return spaceGroup;
+}
+
+// Helper function to convert double2dvec_t lattice to single vector for XtalComp.
+XcMatrix Atoms::lattice_to_xtalcomp_cell()
+{
+    double arr[3][3];
+    for (unsigned i = 0; (i < 3); i++)
+    {
+        for (unsigned j = 0; (j < 3); j++)
+        {
+            arr[i][j] = this->lattice[i][j];
+        }
+    }
+    XcMatrix xtalcomp_cell(arr);
+    return xtalcomp_cell;
+};
+
+// Helper function to convert int1dvec_t atomic numbers to int vector for XtalComp.
+std::vector<unsigned int> Atoms::atomic_numbers_to_xtalcomp_types()
+{
+    std::vector<unsigned int> xtalcomp_types(std::begin(this->atomic_numbers), std::end(this->atomic_numbers));
+    return xtalcomp_types;
+};
+
+// Helper function to convert double2dvec_t scaled positions to vector of XcVector positions for XtalComp.
+std::vector<XcVector> Atoms::positions_to_xtalcomp_positions()
+{
+    std::vector<XcVector> xtalcomp_pos;
+    XcVector subvector;
+    double2dvec_t scalpos = this->get_scaled_positions();
+    for (const auto &entries : scalpos)
+    {
+        subvector.set(entries[0], entries[1], entries[2]);
+        xtalcomp_pos.push_back(subvector);
+    }
+    return xtalcomp_pos;
+}
+
+// Wrapper around the XtalComp Comparison Algorithm
+bool Atoms::xtalcomp_compare(Atoms &other)
+{
+    XcMatrix cell1 = this->lattice_to_xtalcomp_cell();
+    XcMatrix cell2 = other.lattice_to_xtalcomp_cell();
+    std::vector<XcVector> pos1 = this->positions_to_xtalcomp_positions();
+    std::vector<XcVector> pos2 = other.positions_to_xtalcomp_positions();
+    std::vector<unsigned int> types1 = this->atomic_numbers_to_xtalcomp_types();
+    std::vector<unsigned int> types2 = other.atomic_numbers_to_xtalcomp_types();
+
+    bool match = XtalComp::compare(cell1, types1, pos1,
+                                   cell2, types2, pos2,
+                                   NULL, 0.05, 0.25, false);
+    return match;
 }
