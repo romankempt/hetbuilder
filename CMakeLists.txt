@@ -30,6 +30,12 @@ if((CMAKE_BUILD_TYPE MATCHES DEBUG) OR (CMAKE_BUILD_TYPE MATCHES Debug))
   set(CMAKE_CXX_FLAGS_RELEASE "-O0")
 endif()
 
+# Set -fPIC on x86_64
+if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC"  )
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC"  )
+endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
+
 message("-- CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 
 # looking for python
@@ -53,52 +59,34 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     endif()
 endif()
 
+
+#looking for spglib
+set(spglib_FOUND FALSE)
+if (NOT ${CMAKE_BUILD_TYPE} STREQUAL DEBUG)
+    find_library(spglib symspg libsymspg libsymspg.a ${Python3_LIBRARY})
+    set(spglib_FOUND TRUE)
+endif()
+if(NOT spglib)
+    message("-- Could not find an installation of the space group library (spglib).")
+    message("-- Building spglib from submodule.")
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/spglib)
+else()
+    message("-- Found spglib ${spglib}")    
+endif()
+
+
 # looking for pybind11
-find_package(pybind11 CONFIG)
-if(NOT pybind11_FOUND OR (${CMAKE_BUILD_TYPE} STREQUAL DEBUG))
+set(pybind11_FOUND FALSE)
+if (NOT ${CMAKE_BUILD_TYPE} STREQUAL DEBUG)
+    find_package(pybind11 CONFIG)
+endif()
+if(NOT pybind11_FOUND)
     message("-- Could not find an installation of pybind11.")
     message("-- Linking to submodule instead.")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/pybind11)
 endif()
 
-pybind11_add_module(${TARGET} MODULE ${CMAKE_CURRENT_SOURCE_DIR}/backend/pybindings.cpp ${SOURCES})
-
-#looking for spglib
-find_library(SPGLIB symspg libsymspg libsymspg.a ${Python3_LIBRARY})
-if(NOT SPGLIB OR (${CMAKE_BUILD_TYPE} STREQUAL DEBUG))
-    message("-- Could not find an installation of the space group library (spglib).")
-    message("-- Building spglib from submodule.")
-
-    set(SPGLIB_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/spglib)
-    set(SPGLIB_SOURCES ${SPGLIB_SOURCE_DIR}/src/arithmetic.c
-        ${SPGLIB_SOURCE_DIR}/src/cell.c
-        ${SPGLIB_SOURCE_DIR}/src/debug.c
-        ${SPGLIB_SOURCE_DIR}/src/delaunay.c
-        ${SPGLIB_SOURCE_DIR}/src/determination.c
-        ${SPGLIB_SOURCE_DIR}/src/hall_symbol.c
-        ${SPGLIB_SOURCE_DIR}/src/kgrid.c
-        ${SPGLIB_SOURCE_DIR}/src/kpoint.c
-        ${SPGLIB_SOURCE_DIR}/src/mathfunc.c
-        ${SPGLIB_SOURCE_DIR}/src/niggli.c
-        ${SPGLIB_SOURCE_DIR}/src/overlap.c
-        ${SPGLIB_SOURCE_DIR}/src/pointgroup.c
-        ${SPGLIB_SOURCE_DIR}/src/primitive.c
-        ${SPGLIB_SOURCE_DIR}/src/refinement.c
-        ${SPGLIB_SOURCE_DIR}/src/site_symmetry.c
-        ${SPGLIB_SOURCE_DIR}/src/sitesym_database.c
-        ${SPGLIB_SOURCE_DIR}/src/spacegroup.c
-        ${SPGLIB_SOURCE_DIR}/src/spg_database.c
-        ${SPGLIB_SOURCE_DIR}/src/spglib.c
-        ${SPGLIB_SOURCE_DIR}/src/spin.c
-        ${SPGLIB_SOURCE_DIR}/src/symmetry.c)
-
-    add_library(hetbuildersymspg OBJECT ${SPGLIB_SOURCES})
-    add_dependencies(${TARGET} hetbuildersymspg)
-    target_include_directories(${TARGET} PRIVATE ${SPGLIB_SOURCE_DIR}/src)
-    set(SPGLIB hetbuildersymspg)
-else()
-    message("-- Found spglib ${SPGLIB}")
-endif()
+pybind11_add_module(${TARGET} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/backend/pybindings.cpp ${SOURCES})
 
 # looking for OpenMP
 option(USE_OPENMP "Build with OpenMP support" ON)
@@ -108,9 +96,10 @@ if(USE_OPENMP)
         message("-- Found OpenMP ${OPENMP}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -std=gnu++17")    
         target_link_libraries(${TARGET} 
-                                PRIVATE ${Python3_LIBRARY} 
-                                PRIVATE OpenMP::OpenMP_CXX 
-                                PRIVATE ${SPGLIB})
+                                PRIVATE symspg
+                                PRIVATE Python3::Python
+                                PRIVATE OpenMP::OpenMP_CXX                                 
+                                )
     else()
         message("-- Could not find OpenMP")
     endif()
@@ -118,8 +107,9 @@ else()
     message("-- Building without OpenMP")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
     target_link_libraries(${TARGET} 
-                            PRIVATE     ${Python3_LIBRARY}
-                            PRIVATE     ${SPGLIB})
+                            PRIVATE symspg
+                            PRIVATE Python3::Python
+                            )
 endif()
 
 install(TARGETS ${TARGET} LIBRARY DESTINATION .)

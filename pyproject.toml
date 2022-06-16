@@ -5,6 +5,7 @@ requires = [
   "scikit-build",
   "cmake",
   "pybind11",
+  "pybind11-global",
   "numpy",
   "spglib",
   "ninja; platform_system!='Windows'"

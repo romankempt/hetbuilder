@@ -62,7 +62,7 @@ setup(
         "pretty_errors",
         "rich",
         "typer",
-        "pybind11",
+        # "pybind11",
     ],
     classifiers=[
         "Operating System :: OS Independent",
