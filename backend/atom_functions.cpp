@@ -245,9 +245,9 @@ std::tuple<double, double> get_min_max_z(Atoms &atoms)
 
 /**
  * Stacks two Atoms objects on top of each other with an interlayer distance given by distance.
- * 
+ *
  * Returns a new Atoms object.
- * 
+ *
  * The new unit cell is given by C = A + weight * (B - A).
  */
 Atoms stack_atoms(Atoms bottom, Atoms top, double &weight, double &distance)

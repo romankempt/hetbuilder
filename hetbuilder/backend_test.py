@@ -25,10 +25,10 @@ def test_algorithm():
     atoms2 = mx2("MoS2")
     atoms2.pbc = True
     atoms2.cell[2, 2] = 100
-    atoms2.set_cell(atoms2.cell * 1.1, scale_atoms=True)
+    atoms2.set_cell(atoms2.cell * 1.5, scale_atoms=True)
 
     alg = CoincidenceAlgorithm(atoms1, atoms2)
-    results = alg.run(tolerance=0.02, Nmax=15, angle_limits=(0, 180))
+    results = alg.run(tolerance=0.1, Nmax=15, angle_limits=(0, 60))
     if results is not None:
         ip = InteractivePlot(atoms1, atoms2, results, 0.5)
         ip.plot_results()
@@ -51,8 +51,9 @@ def test_scaling_ase(M=4, N=5):
         atoms_list = [atoms] * N
 
         for j in atoms_list:
-            j.rotate(randint(0, 90), "z", rotate_cell=True)
-            j.rattle()
+            if randint(0, 10) > 0:
+                j.rotate(randint(0, 90), "z", rotate_cell=True)
+                j.rattle()
 
         atoms_list[randint(0, len(atoms1) - 1)] = atoms_list[0]
         atoms_list[randint(0, len(atoms1) - 1)].translate([0, 0, 100])
@@ -81,7 +82,7 @@ def test_scaling_ase(M=4, N=5):
             ase_timings.append(t2 - t1)
 
         ase_time = np.average(ase_timings) / len(ase_timings) / 1000
-        print(f"M={m} N={N} \t ASE {ase_time:e} s")
+        print(f"M={m} N={N} \t ASE {ase_time:e} ms")
 
 
 def test_scaling_cpp(M=4, N=5):
@@ -100,8 +101,9 @@ def test_scaling_cpp(M=4, N=5):
         atoms_list = [atoms] * N
 
         for j in atoms_list:
-            j.rotate(randint(0, 90), "z", rotate_cell=True)
-            j.rattle()
+            if randint(0, 10) > 0:
+                j.rotate(randint(0, 90), "z", rotate_cell=True)
+                j.rattle()
 
         atoms_list[randint(0, len(atoms1) - 1)] = atoms_list[0]
         atoms_list[randint(0, len(atoms1) - 1)].translate([0, 0, 100])
@@ -132,9 +134,11 @@ def test_scaling_cpp(M=4, N=5):
             cpp_timings.append(t2 - t1)
 
         cpp_time = np.average(cpp_timings) / len(cpp_timings) / 1000
-        print(f"M={m} N={N} \t CPP {cpp_time:e} s")
+        print(f"M={m} N={N} \t CPP {cpp_time:e} ms")
 
 
-test_scaling_ase()
-test_scaling_cpp()
+# test_scaling_ase()
+test_scaling_cpp(M=20, N=50)
+
+# test_algorithm()
 

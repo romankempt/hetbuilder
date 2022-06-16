@@ -1,4 +1,7 @@
 #include <set>
+#include <chrono>
+#include <ctime>
+#include <algorithm>
 
 #include "logging_functions.h"
 #include "math_functions.h"
@@ -203,6 +206,7 @@ std::vector<Interface> CoincidenceAlgorithm::build_all_supercells(Atoms &bottom,
  * Filters the interfaces.
  *
  * Interfaces are considered equal if their spacegroup, area and number of atoms matches.
+ * If not, an XtalComp equivalence check is performed.
  *
  * Returns a vector of interfaces.
  */
@@ -210,33 +214,6 @@ std::vector<Interface> CoincidenceAlgorithm::filter_supercells(std::vector<Inter
 {
     std::set<Interface> s(stacks.begin(), stacks.end());
     std::vector<Interface> v(s.begin(), s.end());
-
-    return v;
-};
-
-/**
- * Filters the interfaces.
- *
- * Interfaces removed if the stack is symmetry-equivalent to another. The check is performed with XtalComp.
- *
- * Returns a vector of interfaces.
- */
-std::vector<Interface> CoincidenceAlgorithm::remove_duplicates_XtalComp(std::vector<Interface> &stacks)
-{
-    int index = 0;
-    std::vector<Interface> v;
-    for (int i = 0; i < stacks.size(); i++)
-    {
-
-        int j;
-        for (j = 0; j < i; j++)
-            if (stacks[i].stack.xtalcomp_compare(stacks[j].stack))
-                break;
-
-        // If not present, then add it to result.
-        if (j == i)
-            v.push_back(stacks[i]);
-    }
 
     return v;
 };
@@ -299,10 +276,16 @@ std::vector<Interface> CoincidenceAlgorithm::run(int Nmax,
     if (stacks.size() > 0)
     {
         // std::cout << "Size before first filter step: " << stacks.size() << std::endl;
+        auto start = std::chrono::system_clock::now();
         stacks = filter_supercells(stacks);
         // std::cout << "Size after first filter step: " << stacks.size() << std::endl;
-        stacks = remove_duplicates_XtalComp(stacks);
+
+        auto end = std::chrono::system_clock::now();
+
         // std::cout << "Size after 2nd filter step: " << stacks.size() << std::endl;
+
+        // std::chrono::duration<double> elapsed_seconds = end - start;
+        // std::cout << "elapsed time: " << elapsed_seconds.count() << " s" << std::endl;
     }
 
     return stacks;

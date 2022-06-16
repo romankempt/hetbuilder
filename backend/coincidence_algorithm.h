@@ -36,8 +36,6 @@ public:
 
     std::vector<Interface> filter_supercells(std::vector<Interface> &stacks);
 
-    std::vector<Interface> remove_duplicates_XtalComp(std::vector<Interface> &stacks);
-
     std::vector<Interface> run(int cNmax = 10,
                                int cNmin = 0,
                                double1dvec_t cAngles = {0.0, 30.0, 60.0, 90.0},
