@@ -30,11 +30,11 @@ public:
 
     int2dvec_t find_unique_pairs(int2dvec_t &coincidences);
 
-    angle_dict_t reduce_unique_pairs(std::map<double, int2dvec_t> &AnglesMN);
+    angle_dict_t reduce_unique_pairs(std::map<double, int2dvec_t> &AnglesMN, pBar &bar);
 
-    std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, angle_dict_t &AnglesMN, double &weight, double &distance, int &no_idealize, double &symprec, double &angle_tolerance);
+    std::vector<Interface> build_all_supercells(Atoms &bottom, Atoms &top, angle_dict_t &AnglesMN, double &weight, double &distance, pBar &bar);
 
-    std::vector<Interface> filter_supercells(std::vector<Interface> &stacks);
+    std::vector<Interface> filter_supercells(std::vector<Interface> &stacks, pBar &bar);
 
     std::vector<Interface> run(int cNmax = 10,
                                int cNmin = 0,
@@ -42,7 +42,9 @@ public:
                                double cTolerance = 0.01,
                                double cWeight = 0.5,
                                double cDistance = 4.0,
+                               bool cStandardize = true,
                                int cNoIdealize = 0,
                                double cSymPrec = 1e-5,
-                               double cAngleTolerance = 5.0);
+                               double cAngleTolerance = 5.0,
+                               int verbose = 0);
 };

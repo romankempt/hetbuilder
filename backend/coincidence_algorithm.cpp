@@ -1,6 +1,6 @@
 #include <set>
-#include <chrono>
-#include <ctime>
+// include <chrono>
+// include <ctime>
 #include <algorithm>
 
 #include "logging_functions.h"
@@ -136,7 +136,7 @@ int2dvec_t CoincidenceAlgorithm::find_unique_pairs(int2dvec_t &coincidences)
  *
  * Pairs with positive, symmetric entries are preferred.
  */
-angle_dict_t CoincidenceAlgorithm::reduce_unique_pairs(std::map<double, int2dvec_t> &AnglesMN)
+angle_dict_t CoincidenceAlgorithm::reduce_unique_pairs(std::map<double, int2dvec_t> &AnglesMN, pBar &bar)
 {
     angle_dict_t fAnglesMN;
     for (auto i = AnglesMN.begin(); i != AnglesMN.end(); ++i)
@@ -159,6 +159,8 @@ angle_dict_t CoincidenceAlgorithm::reduce_unique_pairs(std::map<double, int2dvec
         std::set<CoincidencePairs> s(CoinPairs.begin(), CoinPairs.end());
         std::vector<CoincidencePairs> v(s.begin(), s.end());
         fAnglesMN.insert(std::make_pair(theta, v));
+        bar.update(1);
+        bar.print();
     }
     return fAnglesMN;
 };
@@ -173,7 +175,7 @@ angle_dict_t CoincidenceAlgorithm::reduce_unique_pairs(std::map<double, int2dvec
  * Returns a vector of interfaces.
  */
 std::vector<Interface> CoincidenceAlgorithm::build_all_supercells(Atoms &bottom, Atoms &top, angle_dict_t &AnglesMN,
-                                                                  double &weight, double &distance, int &no_idealize, double &symprec, double &angle_tolerance)
+                                                                  double &weight, double &distance, pBar &bar)
 {
     std::vector<Interface> stacks;
     for (auto i = AnglesMN.begin(); i != AnglesMN.end(); ++i)
@@ -190,14 +192,12 @@ std::vector<Interface> CoincidenceAlgorithm::build_all_supercells(Atoms &bottom,
             Atoms topLayer = make_supercell(top, N);
             Atoms topLayerRot = rotate_atoms_around_z(topLayer, theta);
             Atoms interface = stack_atoms(bottomLayer, topLayerRot, weight, distance);
-            int spacegroup = interface.standardize(1, no_idealize, symprec, angle_tolerance);
-            if (spacegroup != 0)
-            {
-                Interface stack(bottomLayer, topLayerRot, interface, theta, M, N, spacegroup);
+            Interface stack(bottomLayer, topLayerRot, interface, theta, M, N, 1);
 #pragma omp ordered
-                stacks.push_back(stack);
-            }
+            stacks.push_back(stack);
         };
+        bar.update(1);
+        bar.print();
     };
     return stacks;
 };
@@ -210,10 +210,17 @@ std::vector<Interface> CoincidenceAlgorithm::build_all_supercells(Atoms &bottom,
  *
  * Returns a vector of interfaces.
  */
-std::vector<Interface> CoincidenceAlgorithm::filter_supercells(std::vector<Interface> &stacks)
+std::vector<Interface> CoincidenceAlgorithm::filter_supercells(std::vector<Interface> &stacks, pBar &bar)
 {
-    std::set<Interface> s(stacks.begin(), stacks.end());
-    std::vector<Interface> v(s.begin(), s.end());
+    std::set<Interface> s;
+    std::vector<Interface> v;
+    for (int i = 0; i < stacks.size(); i++)
+    {
+        s.insert(stacks[i]);
+        bar.update(1);
+        bar.print();
+    }
+    v.assign(s.begin(), s.end());
 
     return v;
 };
@@ -227,9 +234,11 @@ std::vector<Interface> CoincidenceAlgorithm::run(int Nmax,
                                                  double tolerance,
                                                  double weight,
                                                  double distance,
+                                                 bool standardize,
                                                  int no_idealize,
                                                  double symprec,
-                                                 double angle_tolerance)
+                                                 double angle_tolerance,
+                                                 int verbose)
 {
     int2dvec_t coincidences;
     std::map<double, int2dvec_t> AnglesMN;
@@ -238,8 +247,18 @@ std::vector<Interface> CoincidenceAlgorithm::run(int Nmax,
     double2dvec_t basisA = {{this->primitive_bottom.lattice[0][0], this->primitive_bottom.lattice[1][0]}, {this->primitive_bottom.lattice[0][1], this->primitive_bottom.lattice[1][1]}};
     double2dvec_t basisB = {{this->primitive_top.lattice[0][0], this->primitive_top.lattice[1][0]}, {this->primitive_top.lattice[0][1], this->primitive_top.lattice[1][1]}};
 
+    std::vector<Interface> stacks;
+    pBar bar;
+    std::string info;
+
+    if (verbose > 0)
+    {
+        info = "\t Angles \t \t [";
+        bar = pBar(angles.size(), info, true);
+    }
     for (int i = 0; i < angles.size(); i++)
     {
+
         double theta = angles[i];
         coincidences = find_coincidences(basisA, basisB, theta, Nmin, Nmax, tolerance);
         if (coincidences.size() > 0)
@@ -251,42 +270,86 @@ std::vector<Interface> CoincidenceAlgorithm::run(int Nmax,
                 AnglesMN.insert(std::make_pair(theta, uniquePairs));
             }
         };
+        if (verbose > 0)
+        {
+            bar.update(1);
+            bar.print();
+        }
     };
 
-    std::vector<Interface> stacks;
+    if (verbose > 0)
+        std::cout << std::endl;
+
     if (AnglesMN.size() > 0)
     {
         angle_dict_t fAnglesMN;
-        fAnglesMN = reduce_unique_pairs(AnglesMN);
+        if (
+            verbose > 0)
+        {
+            info = "\t Coincidence Pairs \t [";
+            bar = pBar(AnglesMN.size(), info, true);
+        }
+        fAnglesMN = reduce_unique_pairs(AnglesMN, bar);
+        if (verbose > 0)
+            std::cout << std::endl;
+
+        if (verbose > 0)
+        {
+            info = "\t Building Supercells \t [";
+            bar = pBar(fAnglesMN.size(), info, true);
+        }
         stacks = build_all_supercells(this->primitive_bottom,
                                       this->primitive_top,
                                       fAnglesMN,
                                       weight,
                                       distance,
-                                      no_idealize,
-                                      symprec,
-                                      angle_tolerance);
+                                      bar);
+
+        if (verbose > 0)
+            std::cout << std::endl;
     }
     else
     {
-        // std::cerr << "Could not find any coincidence pairs." << std::endl;
         return {};
     }
 
     if (stacks.size() > 0)
     {
-        // std::cout << "Size before first filter step: " << stacks.size() << std::endl;
-        auto start = std::chrono::system_clock::now();
-        stacks = filter_supercells(stacks);
-        // std::cout << "Size after first filter step: " << stacks.size() << std::endl;
-
-        auto end = std::chrono::system_clock::now();
-
-        // std::cout << "Size after 2nd filter step: " << stacks.size() << std::endl;
-
-        // std::chrono::duration<double> elapsed_seconds = end - start;
-        // std::cout << "elapsed time: " << elapsed_seconds.count() << " s" << std::endl;
+        if (verbose > 0)
+        {
+            info = "\t Removing Duplicates \t [";
+            bar = pBar(stacks.size(), info, true);
+        }
+        int startsize = stacks.size();
+        stacks = filter_supercells(stacks, bar);
+        if (verbose > 0)
+            std::cout << std::endl;
+        int endsize = stacks.size();
+        if (verbose > 1)
+            std::cout << "\t Removed " << startsize - endsize << " duplicates from " << startsize << " stacks." << std::endl;
     }
+
+    if (standardize)
+    {
+        if (verbose > 0)
+        {
+            info = "\t Standardizing \t \t [";
+            bar = pBar(stacks.size(), info, true);
+        }
+        for (int i = 0; i < stacks.size(); i++)
+        {
+            Interface interface = stacks[i];
+            Atoms stack = interface.stack;
+            int sg = stack.standardize(1, no_idealize, symprec, angle_tolerance);
+            interface.set_stack(stack);
+            interface.set_spacegroup(sg);
+            stacks[i] = interface;
+            bar.update(1);
+            bar.print();
+        }
+        if (verbose > 0)
+            std::cout << std::endl;
+    };
 
     return stacks;
 };

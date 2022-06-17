@@ -1,6 +1,7 @@
 #pragma once
 
 #include "math_functions.h"
+#include <iostream>
 
 class CoincidencePairs
 {
@@ -45,3 +46,63 @@ inline bool operator<(const CoincidencePairs &M1, const CoincidencePairs &M2)
 
     return (score1 > score2);
 }
+
+class pBar
+{
+public:
+    double neededProgress;
+    std::string firstPartOfpBar;
+    std::string lastPartOfpBar = "]",
+                pBarFiller = "=",
+                pBarUpdater = ">";
+    bool show = false;
+
+    pBar(double cneededProgress, std::string cfirstPartOfpBar, bool cshow)
+    {
+        neededProgress = cneededProgress;
+        firstPartOfpBar = cfirstPartOfpBar;
+        show = cshow;
+    };
+
+    pBar()
+    {
+        neededProgress = 100;
+        firstPartOfpBar = "";
+        show = false;
+    };
+
+    void update(double newProgress)
+    {
+        currentProgress += newProgress;
+        amountOfFiller = (int)((currentProgress / neededProgress) * (double)pBarLength);
+    }
+    void print()
+    {
+        if (show)
+        {
+            currUpdateVal %= pBarUpdater.length();
+            std::cout << "\r"             // Bring cursor to start of line
+                      << firstPartOfpBar; // Print out first part of pBar
+            for (int a = 0; a < amountOfFiller; a++)
+            { // Print out current progress
+                std::cout << pBarFiller;
+            }
+            std::cout << pBarUpdater[currUpdateVal];
+            for (int b = 0; b < pBarLength - amountOfFiller; b++)
+            { // Print out spaces
+                std::cout << " ";
+            }
+            std::cout << lastPartOfpBar                                                  // Print out last part of progress bar
+                      << " (" << (int)(100 * (currentProgress / neededProgress)) << "%)" // This just prints out the percent
+                      << std::flush;
+            currUpdateVal += 1;
+        }
+    }
+
+private:
+    int amountOfFiller,
+        pBarLength = 50,        // I would recommend NOT changing this
+        currUpdateVal = 0;      // Do not change
+    double currentProgress = 0; // Do not change
+                                // neededProgress = 100;   // I would recommend NOT changing this
+};

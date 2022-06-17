@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <array>
+#include <cmath>
 
 typedef std::vector<int> int1dvec_t;
 typedef std::vector<double> double1dvec_t;

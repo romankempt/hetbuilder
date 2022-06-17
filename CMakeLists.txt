@@ -22,12 +22,12 @@ set(TARGET hetbuilder_backend)
 
 if((NOT CMAKE_BUILD_TYPE) OR (CMAKE_BUILD_TYPE MATCHES RELEASE))
     set(CMAKE_BUILD_TYPE RELEASE)
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -std=gnu++17")
 endif()
 
 if((CMAKE_BUILD_TYPE MATCHES DEBUG) OR (CMAKE_BUILD_TYPE MATCHES Debug))
   set(CMAKE_BUILD_TYPE DEBUG)
-  set(CMAKE_CXX_FLAGS_RELEASE "-O0")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O0 -std=gnu++17")
 endif()
 
 # Set -fPIC on x86_64
@@ -96,7 +96,7 @@ if(USE_OPENMP)
     find_package(OpenMP 4.5)
     if(OPENMP_FOUND)
         message("-- Found OpenMP ${OPENMP}")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -std=gnu++17")    
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")    
         target_link_libraries(${TARGET} 
                                 PRIVATE symspg
                                 PRIVATE XtalComp
@@ -108,7 +108,7 @@ if(USE_OPENMP)
     endif()
 else()
     message("-- Building without OpenMP")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     target_link_libraries(${TARGET} 
                             PRIVATE symspg
                             PRIVATE XtalComp

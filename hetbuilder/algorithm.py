@@ -174,9 +174,11 @@ class CoincidenceAlgorithm:
         tolerance: float = 0.1,
         weight: float = 0.5,
         distance: float = 4,
+        standardize: bool = False,
         no_idealize: bool = False,
         symprec: float = 1e-5,
         angle_tolerance: float = 5,
+        verbosity: int = 0,
     ) -> list:
         """Executes the coincidence lattice algorithm.
 
@@ -189,9 +191,11 @@ class CoincidenceAlgorithm:
             tolerance (float): Tolerance criterion to accept lattice match. Corresponds to a distance in Angström. Defaults to 0.1.
             weight (float): The coincidence unit cell is C = A + weight * (B-A). Defaults to 0.5.
             distance (float): Interlayer distance of the stacks. Defaults to 4.0 Angström.
+            standardize (bool): Perform spglib standardization. Defaults to true.
             no_idealize (bool): Does not idealize unit cell parameters in the spglib standardization routine. Defaults to False.
             symprec (float): Symmetry precision for spglib. Defaults to 1e-5 Angström.
             angle_tolerance (float): Angle tolerance fo the spglib `spgat` routines. Defaults to 5.
+            verbosity (int): Debug level for printout of Coincidence Algorithm. Defaults to 0.
 
         Returns:
             list : A list of :class:`~hetbuilder.algorithm.Interface`.
@@ -220,6 +224,7 @@ class CoincidenceAlgorithm:
         ), "Angle tolerance must be larger than or equal zero."
         assert (symprec) > 0, "Symmetry precision must be larger than zero."
         assert (weight >= 0) and (weight <= 1), "Weight factor must be between 0 and 1."
+        assert verbosity in [0, 1, 2], "Verbose must be 0, 1, or 2."
 
         angles = double1dVector(angles)
         no_idealize = int(no_idealize)
@@ -237,9 +242,11 @@ class CoincidenceAlgorithm:
             tolerance,
             weight,
             distance,
+            standardize,
             no_idealize,
             symprec,
             angle_tolerance,
+            verbosity,
         )
         if len(results) == 0:
             logger.error("Could not find any coincidence pairs for these parameters.")

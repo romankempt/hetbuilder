@@ -120,7 +120,7 @@ double get_3x3_matrix_determinant(std::vector<std::vector<T>> &mat)
 {
     double determinant = 0;
 
-    //finding determinant
+    // finding determinant
     for (int i = 0; i < 3; i++)
         determinant = determinant + (mat[0][i] * (mat[1][(i + 1) % 3] * mat[2][(i + 2) % 3] - mat[1][(i + 2) % 3] * mat[2][(i + 1) % 3]));
 
@@ -148,8 +148,8 @@ template double2dvec_t invert_3x3_matrix<int>(int2dvec_t &mat);
 template double2dvec_t invert_3x3_matrix<double>(double2dvec_t &mat);
 
 /**
-* This function multiplies two 3x3 matrices and returns a 3x3 matrix.
-*/
+ * This function multiplies two 3x3 matrices and returns a 3x3 matrix.
+ */
 template <typename T1, typename T2>
 std::vector<std::vector<T2>> matrix3x3_dot_matrix3x3(std::vector<std::vector<T1>> &mat1, std::vector<std::vector<T2>> &mat2)
 {

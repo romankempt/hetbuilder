@@ -28,7 +28,7 @@ def test_algorithm():
     atoms2.set_cell(atoms2.cell * 1.5, scale_atoms=True)
 
     alg = CoincidenceAlgorithm(atoms1, atoms2)
-    results = alg.run(tolerance=0.1, Nmax=15, angle_limits=(0, 60))
+    results = alg.run(tolerance=0.1, Nmax=20, angle_limits=(0, 60), verbosity=2)
     if results is not None:
         ip = InteractivePlot(atoms1, atoms2, results, 0.5)
         ip.plot_results()
@@ -111,16 +111,11 @@ def test_scaling_cpp(M=4, N=5):
 
         cpp1 = [ase_atoms_to_cpp_atoms(j) for j in atoms_list]
 
-        def compare(a1, other):
-            # other can be list
-            comp = SymmetryEquivalenceCheck()
-            return comp.compare(a1, other)
-
         def del_dups_cpp(lst):
             """O(n**2) algorithm, O(1) in memory"""
             pos = 0
             for item in lst:
-                if not all([compare(item, item2) for item2 in islice(lst, pos)]):
+                if not all([(item.compare(item2)) for item2 in islice(lst, pos)]):
                     # we haven't seen `item` yet
                     lst[pos] = item
                     pos += 1
@@ -138,7 +133,7 @@ def test_scaling_cpp(M=4, N=5):
 
 
 # test_scaling_ase()
-test_scaling_cpp(M=20, N=50)
+# test_scaling_cpp(M=10, N=50)
 
-# test_algorithm()
+test_algorithm()
 

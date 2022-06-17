@@ -80,3 +80,9 @@ If you use this tool, please cite 10.5281/zenodo.4721346.
 - [matplotlib](https://matplotlib.org/)
 - [pybind11](https://github.com/pybind/pybind11)
 - [typer](https://github.com/tiangolo/typer)
+
+
+## Known Issues
+
+1. `error: '::timespec_get' has not been declared` [see here](https://root-forum.cern.ch/t/error-timespec-get-has-not-been-declared-with-conda-root-package/45712). 
+In this case, the solution seems to be to run `conda upgrade -c conda-forge --all`.

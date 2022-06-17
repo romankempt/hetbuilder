@@ -30,7 +30,7 @@ public:
               double cAngle,
               int2dvec_t cMatrixM,
               int2dvec_t cMatrixN,
-              int cSpaceGroup)
+              int cspaceGroup)
     {
         bottomLayer = cBottomLayer;
         topLayer = cTopLayer;
@@ -38,26 +38,37 @@ public:
         angle = cAngle;
         M = cMatrixM;
         N = cMatrixN;
-        spaceGroup = cSpaceGroup;
+        spaceGroup = cspaceGroup;
     };
+
+    void set_stack(Atoms &stack)
+    {
+        this->stack = stack;
+    }
+
+    void set_spacegroup(int &sg)
+    {
+        this->spaceGroup = sg;
+    }
 };
 
 inline bool operator==(const Interface &c1, const Interface &c2)
 {
-    bool spgmatch = (c1.spaceGroup == c2.spaceGroup);
+    // bool spgmatch = (c1.spaceGroup == c2.spaceGroup);
     bool nummatch = (c1.stack.numAtom == c2.stack.numAtom);
     // bool anglematch = std::abs(c1.angle - c2.angle) < 1e-4;
     double area1 = std::abs(c1.stack.lattice[0][0] * c1.stack.lattice[1][1] - c1.stack.lattice[0][1] * c1.stack.lattice[1][0]);
     double area2 = std::abs(c2.stack.lattice[0][0] * c2.stack.lattice[1][1] - c2.stack.lattice[0][1] * c2.stack.lattice[1][0]);
     bool areamatch = std::abs(area1 - area2) < 1e-6;
-    bool equals = (spgmatch && nummatch && areamatch);
-    if (!equals)
+    bool equals = (nummatch && areamatch);
+    bool match = false;
+    if (equals)
     {
         Atoms a1 = c1.stack;
         Atoms a2 = c2.stack;
-        equals = a1.xtalcomp_compare(a2);
+        bool match = a1.xtalcomp_compare(a2);
     }
-    return equals;
+    return (equals && match);
 }
 
 inline bool operator==(Interface &c1, Interface &c2)
