@@ -102,7 +102,7 @@ def build(
         5, "--angle_tolerance", help="Angle tolerance for spglib."
     ),
     verbosity: int = typer.Option(
-        2, "--verbosity", "-v", count=True, help="Set verbosity level."
+        1, "--verbosity", "-v", count=True, help="Set verbosity level."
     ),
 ) -> None:
     """Builds heterostructure interface for given choice of parameters.
@@ -131,6 +131,7 @@ def build(
         no_idealize=no_idealize,
         symprec=symprec,
         angle_tolerance=angle_tolerance,
+        verbosity=verbosity,
     )
     if results is not None:
         ip = InteractivePlot(bottom, top, results, weight)
@@ -177,7 +178,7 @@ def match(
         5, "--angle_tolerance", help="Angle tolerance for spglib."
     ),
     verbosity: int = typer.Option(
-        0, "--verbosity", "-v", count=True, help="Set verbosity level."
+        1, "--verbosity", "-v", count=True, help="Set verbosity level."
     ),
 ):
     """Matches two structures to find lowest-stress coincidence lattice.
@@ -229,6 +230,7 @@ def match(
                 symprec=symprec,
                 angle_tolerance=angle_tolerance,
                 weight=weight,
+                verbosity=verbosity,
             )
             if r is not None:
                 stresses = [k.stress for k in r]
@@ -239,7 +241,7 @@ def match(
             stresses = [k.stress for k in interfaces]
             idx = stresses.index(min(stresses))
             intf = interfaces[idx]
-            set_verbosity_level(2)
+            set_verbosity_level(1)
             logger.info("Found coincidence structure: {}".format(intf))
             return intf
         else:

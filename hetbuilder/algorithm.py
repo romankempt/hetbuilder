@@ -2,6 +2,11 @@ import ase.io
 from ase.atoms import Atoms
 from ase.spacegroup import Spacegroup
 from ase.geometry import permute_axes
+from ase.geometry.analysis import Analysis
+
+from itertools import combinations_with_replacement
+
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -9,6 +14,8 @@ from scipy.linalg import polar
 
 from hetbuilder.log import *
 from hetbuilder.atom_checks import check_atoms, recenter
+
+import sys
 
 from hetbuilder.hetbuilder_backend import (
     double2dVector,
@@ -70,6 +77,23 @@ def check_angles(
         logger.error("Angle specifications not recognized.")
 
 
+def get_unique_bond_lengths(atoms: "ase.atoms.AToms") -> dict:
+    """ Returns a dictionary containing average bond values of a structure. """
+    symbs = set(atoms.get_chemical_symbols())
+    pairs = list(combinations_with_replacement(symbs, 2))
+    ana = Analysis(atoms)
+    unique_bonds = {}
+    for p in pairs:
+        bonds = ana.get_bonds(*p)
+        if bonds == [[]]:
+            continue
+        bond_values = ana.get_values(bonds)
+        avg = np.average(bond_values)
+        unique_bonds[p] = avg
+    return unique_bonds
+
+
+@dataclass
 class Interface:
     """Exposes the C++ implementation of the CppInterfaceClass.
     
@@ -79,13 +103,15 @@ class Interface:
         stack (ase.atoms.Atoms): Combined lower and upper layer as supercell.
         M (numpy.ndarray): Supercell matrix M.
         N (numpy.ndarray): Supercell matrix N.
-        spacegroup (ase.spacegroup.Spacegroup): Space group of the stack.
         angle (float): Twist angle in degree.
-        stress (float): Stress measure.
+        stress (float): Stress measure of the unit cell.
+        strain (float): Strain measure of the bond lengths.
 
     """
 
-    def __init__(self, interface: "CppInterfaceClass" = None, weight=0.5) -> None:
+    def __init__(
+        self, interface: "CppInterfaceClass" = None, weight=0.5, **kwargs
+    ) -> None:
         bottom = cpp_atoms_to_ase_atoms(interface.bottom)
         top = cpp_atoms_to_ase_atoms(interface.top)
         stack = cpp_atoms_to_ase_atoms(interface.stack)
@@ -93,28 +119,28 @@ class Interface:
         self.bottom = recenter(bottom)
         self.top = recenter(top)
         self.stack = recenter(stack)
-        self.stack = stack
         self.M = [[j for j in k] for k in interface.M]
         self.N = [[j for j in k] for k in interface.N]
-        self.spacegroup = Spacegroup(interface.spacegroup)
         self.angle = interface.angle
         self._weight = weight
         self._stress = None
+        self.bbl = kwargs.get("bottom_bond_lengths", None)
+        self.tbl = kwargs.get("top_bond_lengths", None)
 
     def __repr__(self):
-        return "{}(M={}, N={}, spacegroup='{}', angle={:.1f}, stress={:.1f})".format(
-            self.__class__.__name__,
-            self.M,
-            self.N,
-            self.spacegroup.symbol,
-            self.angle,
-            self.stress,
+        return "{}(M={}, N={}, angle={:.1f}, stress={:.1f})".format(
+            self.__class__.__name__, self.M, self.N, self.angle, self.stress,
         )
 
     @property
     def stress(self) -> float:
         """Returns the stress measure."""
         return self.measure_stress()
+
+    @property
+    def strain(self) -> float:
+        """Returns the strain measure."""
+        return self.measure_strain()
 
     def measure_stress(self) -> float:
         """Measures the stress on both unit cells."""
@@ -146,6 +172,25 @@ class Interface:
         # return (stress, P1 - np.identity(2), P2 - np.identity(2))
         return stress
 
+    def measure_strain(self) -> float:
+        """Measures the average strain on bond lengths on both substructures."""
+        bond_lengths = get_unique_bond_lengths(self.stack)
+        bottom_strain = []
+        top_strain = []
+        for k, b in bond_lengths.items():
+            for k2, b2 in self.bbl.items():
+                if (k2 == k) or (k2[::-1] == k):
+                    d = np.abs((b2 - b)) / b * 100
+                    # print("bottom", k2, d)
+                    bottom_strain.append(d)
+            for k3, b3 in self.tbl.items():
+                if (k3 == k) or (k3[::-1] == k):
+                    d = np.abs((b3 - b)) / b * 100
+                    # print("top", k3, d)
+                    top_strain.append(d)
+        strain = np.average(bottom_strain) + np.average(top_strain)
+        return strain
+
 
 class CoincidenceAlgorithm:
     """Exposes the C++ implementation of the CppCoincidenceAlgorithmClass.
@@ -158,6 +203,8 @@ class CoincidenceAlgorithm:
     def __init__(self, bottom: "ase.atoms.Atoms", top: "ase.atoms.Atoms") -> None:
         self.bottom = check_atoms(bottom)
         self.top = check_atoms(top)
+        self.bdl = get_unique_bond_lengths(bottom)
+        self.tbl = get_unique_bond_lengths(top)
 
     def __repr__(self):
         return "{}(bottom={}, top={})".format(
@@ -256,5 +303,14 @@ class CoincidenceAlgorithm:
                 logger.info("Found 1 result.")
             else:
                 logger.info("Found {:d} results.".format(len(results)))
-            interfaces = [Interface(k, weight=weight) for k in results]
+
+            interfaces = [
+                Interface(
+                    k,
+                    weight=weight,
+                    bottom_bond_lengths=self.bdl,
+                    top_bond_lengths=self.tbl,
+                )
+                for k in results
+            ]
             return interfaces

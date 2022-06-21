@@ -1,3 +1,4 @@
+from dataclasses import dataclass, astuple
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button
 import matplotlib.cm as cm
@@ -15,6 +16,11 @@ from hetbuilder.algorithm import Interface
 
 from collections import namedtuple
 
+from ase.neighborlist import natural_cutoffs, NeighborList
+
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+
+import tkinter as tk
 
 mutedblack = "#1a1a1a"
 
@@ -29,14 +35,15 @@ def plot_stack(stack: "ase.atoms.Atoms" = None, supercell_data: "namedtuple" = N
     axes.set_xticks([])
     axes.set_xlabel("")
     axes.set_ylabel("")
-    description = r"#{:d}, {:d} atoms, {:.1f} % stress, $\theta=${:.2f}°".format(
+    description = r"#{:d}, {:d} atoms, {:.1f} % deformation, $\theta=${:.2f}°".format(
         supercell_data.index,
         supercell_data.natoms,
-        supercell_data.stress,
+        supercell_data.stress + supercell_data.strain,
         supercell_data.angle,
     )
     axes.set_title(description, fontsize=12)
     plot_atoms(stack, axes, radii=0.3)
+
     axes.set_frame_on(False)
     canvas.draw()
 
@@ -45,7 +52,7 @@ def plot_grid(
     basis: "numpy.ndarray" = None,
     supercell_matrix: "numpy.ndarray" = None,
     Nmax: int = None,
-    **kwargs
+    **kwargs,
 ):
     """Plots lattice points of a unit cell."""
     axes = plt.gca()
@@ -100,7 +107,21 @@ def plot_lattice_points(
     axes.set_xticks([])
     axes.set_xlabel("")
     axes.set_ylabel("")
-    natoms, m1, m2, m3, m4, n1, n2, n3, n4, angle, stress, index = supercell_data
+    (
+        natoms,
+        m1,
+        m2,
+        m3,
+        m4,
+        n1,
+        n2,
+        n3,
+        n4,
+        angle,
+        stress,
+        strain,
+        index,
+    ) = supercell_data
     sc1 = np.array([[m1, m2], [m3, m4]])
     sc2 = np.array([[n1, n2], [n3, n4]])
     Nmax = max(abs(j) for j in [m1, m2, m3, m4, n1, n2, n3, n4]) * 2
@@ -158,6 +179,26 @@ def rand_jitter(arr, jitter):
     return arr + np.random.randn(len(arr)) * stdev
 
 
+@dataclass
+class SuperCellData:
+    natoms: int
+    m1: int
+    m2: int
+    m3: int
+    m4: int
+    n1: int
+    n2: int
+    n3: int
+    n4: int
+    angle: float
+    stress: float
+    strain: float
+    index: int
+
+    def __iter__(self):
+        return iter(astuple(self))
+
+
 class InteractivePlot:
     """ Interactive visualization of the results via matplotlib. 
     
@@ -189,7 +230,9 @@ class InteractivePlot:
         Generates a matplotlib interface that allows to select the reconstructed stacks and save them to a file.    
         """
         results = self.results
-        data = np.array([[i.stress, len(i.stack)] for i in results], dtype=float)
+        data = np.array(
+            [[i.stress + i.strain, len(i.stack)] for i in results], dtype=float
+        )
         color = [i.angle for i in results]
         norm = Normalize(vmin=0, vmax=90, clip=True)
         cmap = LinearSegmentedColormap.from_list(
@@ -221,7 +264,7 @@ class InteractivePlot:
         ax1.set_xlim(0.00, np.max(data[:, 0]) * 1.1)
         ax1.set_ylim(np.min(data[:, 1]) * 0.95, np.max(data[:, 1]) * 1.05)
         ax1.set_ylim(0, ax1.get_ylim()[1] + 10)
-        ax1.set_xlabel(r"$\bar{\varepsilon}_A + \bar{\varepsilon}_B$ [%]", fontsize=12)
+        ax1.set_xlabel(r"deformation [%]", fontsize=12)
         ax1.set_ylabel("Number of atoms", fontsize=14)
         ax1.set_title("Click a point to select a structure.", fontsize=12)
         ax1.grid(axis="both", color="lightgray", linestyle="-", linewidth=1, alpha=0.2)
@@ -243,12 +286,25 @@ class InteractivePlot:
 
         def __save(stack):
             try:
-                name = "{}_M{}{}{}{}_N{}{}{}{}_a{:.2f}_s{:.1f}.xyz".format(
-                    self.current_stack.get_chemical_formula(), *self.current_scdata[1:]
-                )
-                stack.write(name, vec_cell=True)
+                sc = self.current_scdata
+                form = self.current_stack.get_chemical_formula()
+                info_string = []
+                info_string.append(form)
+                M = [sc.m1, sc.m2, sc.m3, sc.m4]
+                N = [sc.n1, sc.n2, sc.n3, sc.n4]
+                a = sc.angle
+                s1 = sc.stress
+                s2 = sc.strain
+                info_string.append("M = [{} {} // {} {}]".format(*M))
+                info_string.append("N = [{} {} // {} {}]".format(*N))
+                info_string.append(f"angle = {a:.4f} [degree]")
+                info_string.append(f"stress = {s1:.4f} [%]")
+                info_string.append(f"strain = {s2:.4f} [%]")
+                index = sc.index
+                name = "{}_{:.2f}_degree_{}.in".format(form, a, index)
+                stack.write(name, info_str=info_string, format="aims")
                 logger.info("Saved structure to {}".format(name))
-            except:
+            except Exception as excpt:
                 logger.error("You need to select a point first.")
 
         save = Button(axbutton, " Save this structure. ")
@@ -266,39 +322,24 @@ class InteractivePlot:
         N = np.array(self.results[index].N)
         angle = self.results[index].angle
         stress = self.results[index].stress
+        strain = self.results[index].strain
         m1, m2, m3, m4 = M[0, 0], M[0, 1], M[1, 0], M[1, 1]
         n1, n2, n3, n4 = N[0, 0], N[0, 1], N[1, 0], N[1, 1]
 
-        supercell_data = namedtuple(
-            "supercell_data",
-            [
-                "natoms",
-                "m1",
-                "m2",
-                "m3",
-                "m4",
-                "n1",
-                "n2",
-                "n3",
-                "n4",
-                "angle",
-                "stress",
-                "index",
-            ],
-        )
-        scdata = supercell_data(
-            int(len(stack)),
-            int(m1),
-            int(m2),
-            int(m3),
-            int(m4),
-            int(n1),
-            int(n2),
-            int(n3),
-            int(n4),
-            float(angle),
-            float(stress),
-            index,
+        scdata = SuperCellData(
+            natoms=int(len(stack)),
+            m1=int(m1),
+            m2=int(m2),
+            m3=int(m3),
+            m4=int(m4),
+            n1=int(n1),
+            n2=int(n2),
+            n3=int(n3),
+            n4=int(n4),
+            angle=float(angle),
+            stress=float(stress),
+            strain=float(strain),
+            index=int(index),
         )
         self.current_scdata = scdata
         self.current_stack = stack

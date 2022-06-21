@@ -50,8 +50,6 @@ def set_verbosity_level(verbosity):
     if verbosity == 0:
         level = "CRITICAL"
     elif verbosity == 1:
-        level = "WARNING"
-    elif verbosity == 2:
         level = "INFO"
     else:
         level = "DEBUG"

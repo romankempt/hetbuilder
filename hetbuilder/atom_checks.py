@@ -3,6 +3,7 @@ from ase.geometry import permute_axes
 from ase import neighborlist
 from ase.data import covalent_radii
 from ase.build import make_supercell
+from ase.neighborlist import NeighborList
 
 from spglib import find_primitive
 
@@ -15,13 +16,13 @@ from collections import namedtuple
 from hetbuilder.log import *
 
 
-def find_fragments(atoms: "ase.atoms.Atoms", scale: float = 1.5) -> list:
+def find_fragments(atoms, scale=1.0) -> list:
     """Finds unconnected structural fragments by constructing
     the first-neighbor topology matrix and the resulting graph
     of connected vertices.
 
     Args:
-        atoms: :class:`~ase.atoms.Atoms`.
+        atoms: :class:`~ase.atoms.Atoms` or :class:`~aimstools.structuretools.structure.Structure`.
         scale: Scaling factor for covalent radii.
 
     Note:
@@ -29,54 +30,41 @@ def find_fragments(atoms: "ase.atoms.Atoms", scale: float = 1.5) -> list:
 
     Returns:
         list: NamedTuple with indices and atoms object.
+
     """
 
-    atoms = atoms.copy()
     radii = scale * covalent_radii[atoms.get_atomic_numbers()]
-    nl = neighborlist.NeighborList(radii, skin=0, self_interaction=False, bothways=True)
+    nl = NeighborList(radii, bothways=True, self_interaction=False, skin=0.0,)
     nl.update(atoms)
     connectivity_matrix = nl.get_connectivity_matrix(sparse=False)
+    edges = np.argwhere(connectivity_matrix == 1)
 
-    con_tuples = {}  # connected first neighbors
-    for row in range(connectivity_matrix.shape[0]):
-        con_tuples[row] = []
-        for col in range(connectivity_matrix.shape[1]):
-            if connectivity_matrix[row, col] == 1:
-                con_tuples[row].append(col)
+    graph = nx.from_edgelist(edges)  # converting to a graph
+    con_tuples = list(
+        nx.connected_components(graph)
+    )  # graph theory can be pretty handy
+    fragments = [
+        atoms[list(i)] for i in con_tuples
+    ]  # the fragments are not always layers
 
-    pairs = []  # cleaning up the first neighbors
-    for index in con_tuples.keys():
-        for value in con_tuples[index]:
-            if index > value:
-                pairs.append((index, value))
-            elif index <= value:
-                pairs.append((value, index))
-    pairs = set(pairs)
-
-    graph = nx.from_edgelist(pairs)  # converting to a graph
-    con_tuples = list(nx.connected_components(graph))
-
-    fragments = {}
+    fragments_dict = {}
     i = 0
-    for tup in con_tuples:
+    for tup, atom in zip(con_tuples, fragments):
         fragment = namedtuple("fragment", ["indices", "atoms"])
-        ats = ase.Atoms()
         indices = []
         for entry in tup:
-            ats.append(atoms[entry])
             indices.append(entry)
-        ats.cell = atoms.cell
-        ats.pbc = atoms.pbc
-        fragments[i] = fragment(indices, ats)
+        indices = set(indices)
+        fragments_dict[i] = fragment(indices, atom)
         i += 1
-    fragments = [
+    fragments_dict = [
         v
         for k, v in sorted(
-            fragments.items(),
+            fragments_dict.items(),
             key=lambda item: np.average(item[1][1].get_positions()[:, 2]),
         )
     ]
-    return fragments
+    return fragments_dict
 
 
 def find_periodic_axes(atoms: "ase.atoms.Atoms") -> dict:
