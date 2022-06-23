@@ -10,18 +10,78 @@ public:
     double2dvec_t positions;
     int1dvec_t atomic_numbers;
     int numAtom;
+    int1dvec_t indices;
+    double1dvec_t magmoms;
 
-    Atoms(double2dvec_t cLattice = {},
-          double2dvec_t cPositions = {},
-          int1dvec_t cAtomicNumbers = {})
+    // constructor if neither indices nor magmoms were provided
+    Atoms(double2dvec_t cLattice,
+          double2dvec_t cPositions,
+          int1dvec_t cAtomicNumbers)
     {
         lattice = cLattice;
         positions = cPositions;
         atomic_numbers = cAtomicNumbers;
         numAtom = atomic_numbers.size();
+        for (int i = 0; i < numAtom; i++)
+        {
+            indices.push_back(i);
+            magmoms.push_back(0.0);
+        }
     };
 
+    // constructor if indices were not provided
+    Atoms(double2dvec_t cLattice,
+          double2dvec_t cPositions,
+          int1dvec_t cAtomicNumbers,
+          double1dvec_t cMagmoms)
+    {
+        lattice = cLattice;
+        positions = cPositions;
+        atomic_numbers = cAtomicNumbers;
+        magmoms = cMagmoms;
+        numAtom = atomic_numbers.size();
+        for (int i = 0; i < numAtom; i++)
+            indices.push_back(i);
+    };
+
+    // constructor if magmoms were not provided
+    Atoms(double2dvec_t cLattice,
+          double2dvec_t cPositions,
+          int1dvec_t cAtomicNumbers,
+          int1dvec_t cIndices)
+    {
+        lattice = cLattice;
+        positions = cPositions;
+        atomic_numbers = cAtomicNumbers;
+        numAtom = atomic_numbers.size();
+        indices = cIndices;
+        for (int i = 0; i < numAtom; i++)
+        {
+            magmoms.push_back(0.0);
+        }
+    };
+
+    // constructor if magmoms and indices were provided
+    Atoms(double2dvec_t cLattice,
+          double2dvec_t cPositions,
+          int1dvec_t cAtomicNumbers,
+          int1dvec_t cIndices,
+          double1dvec_t cMagmoms)
+    {
+        lattice = cLattice;
+        positions = cPositions;
+        atomic_numbers = cAtomicNumbers;
+        numAtom = atomic_numbers.size();
+        indices = cIndices;
+        magmoms = cMagmoms;
+    };
+
+    // empty constructur
+    Atoms(){};
+
     void print(void);
+
+    int1dvec_t get_index_mapping(void);
 
     double2dvec_t get_scaled_positions(void);
 

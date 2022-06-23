@@ -9,8 +9,6 @@ import numpy as np
 
 from itertools import product
 
-from ase.visualize.plot import plot_atoms
-
 from hetbuilder.log import *
 from hetbuilder.algorithm import Interface
 
@@ -25,7 +23,14 @@ import tkinter as tk
 mutedblack = "#1a1a1a"
 
 
-def plot_stack(stack: "ase.atoms.Atoms" = None, supercell_data: "namedtuple" = None):
+from hetbuilder.utils import plot_atoms
+
+# from ase.visualize.plot import plot_atoms
+
+
+def plot_stack(
+    stack: "ase.atoms.Atoms" = None, supercell_data: "namedtuple" = None, bonds=None,
+):
     """Wrapper of the :func:~`ase.visualize.plot.plot_atoms` function."""
     fig = plt.gcf()
     axes = plt.gca()
@@ -42,8 +47,7 @@ def plot_stack(stack: "ase.atoms.Atoms" = None, supercell_data: "namedtuple" = N
         supercell_data.angle,
     )
     axes.set_title(description, fontsize=12)
-    plot_atoms(stack, axes, radii=0.3)
-
+    plot_atoms(stack, axes, radii=0.3, scale=1, bonds=bonds)
     axes.set_frame_on(False)
     canvas.draw()
 
@@ -355,5 +359,7 @@ class InteractivePlot:
             basis1=basis1, basis2=basis2, supercell_data=scdata, weight=self._weight,
         )
         plt.sca(fig.axes[2])
-        plot_stack(stack=stack, supercell_data=scdata)
+        plot_stack(
+            stack=stack, supercell_data=scdata, bonds=self.results[index].bonds,
+        )
 

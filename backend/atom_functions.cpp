@@ -136,6 +136,8 @@ double2dvec_t lattice_points_in_supercell(int2dvec_t &superCellMatrix)
 /**
  * Generate a supercell by applying a SuperCellMatrix to
     the input atomic configuration prim.
+
+    Indices of the supercell atom map to the indices of the primitive cell for later use.
 */
 Atoms make_supercell(Atoms &prim, int2dvec_t &superCellMatrix)
 {
@@ -154,10 +156,14 @@ Atoms make_supercell(Atoms &prim, int2dvec_t &superCellMatrix)
     double2dvec_t new_positions = prim.positions;
 
     int1dvec_t new_numbers = prim.atomic_numbers;
+    int1dvec_t index_mapping = prim.indices;
+    double1dvec_t new_magmoms = prim.magmoms;
     for (int i = 0; i < prim.numAtom; i++)
     {
         double1dvec_t atom_pos = prim.positions[i];
         int number = prim.atomic_numbers[i];
+        int index = prim.indices[i];
+        double magmom = prim.magmoms[i];
         for (int row = 0; row < lattice_points.size(); row++)
         {
             double1dvec_t lp = lattice_points[row];
@@ -169,10 +175,12 @@ Atoms make_supercell(Atoms &prim, int2dvec_t &superCellMatrix)
                 }
                 new_positions.push_back(lp);
                 new_numbers.push_back(number);
+                index_mapping.push_back(index);
+                new_magmoms.push_back(magmom);
             }
         }
     }
-    Atoms superatoms = {supercell, new_positions, new_numbers};
+    Atoms superatoms = {supercell, new_positions, new_numbers, index_mapping, new_magmoms};
     return superatoms;
 };
 
@@ -204,7 +212,7 @@ Atoms rotate_atoms_around_z(Atoms &atoms, double &theta)
     double2dvec_t rotCellTranspose = matrix3x3_dot_matrix3x3(R, tCell);
     double2dvec_t rotCell = transpose_matrix3x3<double>(rotCellTranspose);
 
-    Atoms rotatoms(rotCell, rotPositions, atoms.atomic_numbers);
+    Atoms rotatoms(rotCell, rotPositions, atoms.atomic_numbers, atoms.indices, atoms.magmoms);
     return rotatoms;
 };
 

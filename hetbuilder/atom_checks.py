@@ -3,7 +3,7 @@ from ase.geometry import permute_axes
 from ase import neighborlist
 from ase.data import covalent_radii
 from ase.build import make_supercell
-from ase.neighborlist import NeighborList
+from ase.neighborlist import NeighborList, NewPrimitiveNeighborList
 
 from spglib import find_primitive
 
@@ -34,7 +34,13 @@ def find_fragments(atoms, scale=1.0) -> list:
     """
 
     radii = scale * covalent_radii[atoms.get_atomic_numbers()]
-    nl = NeighborList(radii, bothways=True, self_interaction=False, skin=0.0,)
+    nl = NeighborList(
+        radii,
+        bothways=True,
+        self_interaction=False,
+        skin=0.0,
+        primitive=NewPrimitiveNeighborList,
+    )
     nl.update(atoms)
     connectivity_matrix = nl.get_connectivity_matrix(sparse=False)
     edges = np.argwhere(connectivity_matrix == 1)

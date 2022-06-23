@@ -56,6 +56,7 @@ This should open a [matplotlib](https://matplotlib.org/) interface looking like 
 
 ![](pictures/interface.png)
 
+
 ## Documentation
 
 Documentation is available at [Read the Docs](https://hetbuilder.readthedocs.io/en/latest/index.html).

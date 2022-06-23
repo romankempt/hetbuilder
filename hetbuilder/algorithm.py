@@ -15,6 +15,13 @@ from scipy.linalg import polar
 from hetbuilder.log import *
 from hetbuilder.atom_checks import check_atoms, recenter
 
+from ase.neighborlist import (
+    NeighborList,
+    natural_cutoffs,
+    NewPrimitiveNeighborList,
+    find_mic,
+)
+
 import sys
 
 from hetbuilder.hetbuilder_backend import (
@@ -36,7 +43,10 @@ def ase_atoms_to_cpp_atoms(atoms: "ase.atoms.Atoms") -> "CppAtomsClass":
     atomic_numbers = int1dVector([k for k in atoms.numbers])
     lattice = double2dVector([double1dVector(k) for k in lattice])
     positions = double2dVector([double1dVector(k) for k in positions])
-    return CppAtomsClass(lattice, positions, atomic_numbers)
+    indices = int1dVector([k.index for k in atoms])
+    magmoms = atoms.get_initial_magnetic_moments()
+    magmoms = double1dVector([k for k in magmoms])
+    return CppAtomsClass(lattice, positions, atomic_numbers, indices, magmoms)
 
 
 def cpp_atoms_to_ase_atoms(cppatoms: "CppAtomsClass") -> "ase.atoms.Atoms":
@@ -44,8 +54,13 @@ def cpp_atoms_to_ase_atoms(cppatoms: "CppAtomsClass") -> "ase.atoms.Atoms":
     lattice = [[j for j in k] for k in cppatoms.lattice]
     positions = [[j for j in k] for k in cppatoms.positions]
     numbers = [i for i in cppatoms.atomic_numbers]
+    magmoms = [i for i in cppatoms.magmoms]
     atoms = Atoms(
-        numbers=numbers, positions=positions, cell=lattice, pbc=[True, True, True]
+        numbers=numbers,
+        positions=positions,
+        cell=lattice,
+        pbc=[True, True, True],
+        magmoms=magmoms,
     )
     return atoms
 
@@ -77,20 +92,66 @@ def check_angles(
         logger.error("Angle specifications not recognized.")
 
 
-def get_unique_bond_lengths(atoms: "ase.atoms.AToms") -> dict:
-    """ Returns a dictionary containing average bond values of a structure. """
+def get_bond_data(atoms: "ase.atoms.Atoms", return_bonds=True) -> tuple:
+    """ Returns a tuple holding bond indices and average bond values.
+    
+    If the input structure is larger than 1000 atoms, the neighborlist is not computed and not all bonds are determined.
+    Only a subsample is queried to determine the strain.
+    """
+    atoms = atoms.copy()
     symbs = set(atoms.get_chemical_symbols())
+    bonds = None
+
+    if len(atoms) > 1000 or return_bonds == False:
+        # not computing neighborlists for all bonds here, too slow
+        from scipy.spatial import KDTree
+
+        return_bonds = False
+        s1 = set(atoms.get_chemical_symbols())
+        s2 = {}
+        i = 1
+        p = atoms.positions
+        tree = KDTree(atoms.positions)
+        middle = np.mean(p, axis=0)
+        middle[2] = np.min(p[:, 2])  # so we are not searching in vacuum
+        while s1 != s2 and i < 4:
+            sample = tree.query_ball_point(middle, r=i * 10)
+            subatoms = atoms[sample]
+            s2 = set(subatoms.get_chemical_symbols())
+            i += 1
+            if i == 3:
+                raise Exception(
+                    "Could not find all species in the subquery. This should not happen."
+                )
+
+        atoms = subatoms
+
     pairs = list(combinations_with_replacement(symbs, 2))
-    ana = Analysis(atoms)
+    cutoffs = np.array(natural_cutoffs(atoms)) * 1.25
+    nl = NeighborList(cutoffs, skin=0.0, primitive=NewPrimitiveNeighborList)
+    nl.update(atoms)
+    ana = Analysis(atoms, nl=nl)
+
+    if return_bonds:
+        nbonds = nl.nneighbors + nl.npbcneighbors
+        bonds = []
+        for a in range(len(atoms)):
+            indices, offsets = nl.get_neighbors(a)
+            for i, offset in zip(indices, offsets):
+                startvector = atoms.positions[a]
+                endvector = atoms.positions[i] + offset @ atoms.get_cell()
+                if np.sum((endvector - startvector) ** 2) > 0:
+                    bonds.append([a, i])
+
     unique_bonds = {}
     for p in pairs:
-        bonds = ana.get_bonds(*p)
-        if bonds == [[]]:
+        anabonds = ana.get_bonds(*p)
+        if anabonds == [[]]:
             continue
-        bond_values = ana.get_values(bonds)
+        bond_values = ana.get_values(anabonds)
         avg = np.average(bond_values)
         unique_bonds[p] = avg
-    return unique_bonds
+    return bonds, unique_bonds
 
 
 @dataclass
@@ -126,6 +187,7 @@ class Interface:
         self._stress = None
         self.bbl = kwargs.get("bottom_bond_lengths", None)
         self.tbl = kwargs.get("top_bond_lengths", None)
+        self._bonds, self._bond_lengths = get_bond_data(self.stack)
 
     def __repr__(self):
         return "{}(M={}, N={}, angle={:.1f}, stress={:.1f})".format(
@@ -174,22 +236,28 @@ class Interface:
 
     def measure_strain(self) -> float:
         """Measures the average strain on bond lengths on both substructures."""
-        bond_lengths = get_unique_bond_lengths(self.stack)
+        bond_lengths = self.bond_lengths
         bottom_strain = []
         top_strain = []
-        for k, b in bond_lengths.items():
-            for k2, b2 in self.bbl.items():
-                if (k2 == k) or (k2[::-1] == k):
-                    d = np.abs((b2 - b)) / b * 100
-                    # print("bottom", k2, d)
+        for (k1, b1) in bond_lengths.items():
+            for k3, b3 in self.bbl.items():
+                if (k3 == k1) or (k3[::-1] == k1):
+                    d = np.abs((b3 - b1)) / b1 * 100
                     bottom_strain.append(d)
             for k3, b3 in self.tbl.items():
-                if (k3 == k) or (k3[::-1] == k):
-                    d = np.abs((b3 - b)) / b * 100
-                    # print("top", k3, d)
+                if (k3 == k1) or (k3[::-1] == k1):
+                    d = np.abs((b3 - b1)) / b1 * 100
                     top_strain.append(d)
         strain = np.average(bottom_strain) + np.average(top_strain)
         return strain
+
+    @property
+    def bonds(self):
+        return self._bonds
+
+    @property
+    def bond_lengths(self):
+        return self._bond_lengths
 
 
 class CoincidenceAlgorithm:
@@ -203,8 +271,8 @@ class CoincidenceAlgorithm:
     def __init__(self, bottom: "ase.atoms.Atoms", top: "ase.atoms.Atoms") -> None:
         self.bottom = check_atoms(bottom)
         self.top = check_atoms(top)
-        self.bdl = get_unique_bond_lengths(bottom)
-        self.tbl = get_unique_bond_lengths(top)
+        _, self.bdl = get_bond_data(bottom)
+        _, self.tbl = get_bond_data(top)
 
     def __repr__(self):
         return "{}(bottom={}, top={})".format(

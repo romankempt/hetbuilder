@@ -98,15 +98,12 @@ After the set $S(\theta)$ is reduced, the atomic supercell configurations are ge
 
     Where the weight factor $w$ ranges from 0 to 1 and determines if the common unit cell $\mathbf{C}_i$ is either completely given by the lattice of $\mathbf{A}$ or $\mathbf{B}$ or in between. This yields a set of atomic configurations for all angles $P = \{\mathbf{(C}_i,\theta_i)\}$.
 
-4. The set  $P$ can further be reduced by removing symmetry-equivalencies. This is achieved by standardization via the Space Group library [spglib](https://atztogo.github.io/spglib/python-spglib.html). After standardization, two atomic configurations are considered equivalent if:
+4. The set  $P$ can further be reduced by removing symmetry-equivalencies. This is achieved via the [XtalComp](https://github.com/allisonvacanti/XtalComp) algorithm.
    
-   - their space groups match
-   - they have the same number of atoms
-   - they yield the same area
 
-# Definition of the Stress Measure
+# Definition of the deformation measure
 
-Dropping the index $i$, one can define the target transformation matrices:
+Dropping the index $i$, one can define the target transformation matrices to measure the stress on the unit cells:
 
 ```math
 \mathbf{T_A} \mathbf{MA} = \mathbf{C} ~~~~ \mathbf{T_B}  \mathbf{N} \mathbf{R}(\theta) \mathbf{B} = \mathbf{C}
@@ -139,4 +136,11 @@ As an average value, we calculate the stress measure $\bar{\varepsilon}$:
 And a total stress measure on both unit cells:
 ```math
 \bar{\varepsilon}_{tot} = \bar{\varepsilon}_A + \bar{\varepsilon}_B
+```
+
+However, this stress measure becomes small for large unit cells by definition. A more meaningful measure is to look at how much the average bond lengths $\bar{|b^{ij}|}$ change given the two species $i$ and $j$ compared to the original cell.
+This strain measure describes how much the bonds are strained or compressed in the new unit cell. We define an arbitrary deformation measure then as:
+
+```math
+\text{deformation} = \bar{\varepsilon}_A + \bar{\varepsilon}_B + \text{avg}(  \frac{\Delta \bar{|b_{A}^{ij}|} }{ \bar{|b_{A}^{ij}}  ) +  \text{avg}(  \frac{\Delta \bar{|b_{B}^{ij}|} }{ \bar{|b_{B}^{ij}}  )
 ```

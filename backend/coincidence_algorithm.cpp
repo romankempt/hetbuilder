@@ -253,7 +253,7 @@ std::vector<Interface> CoincidenceAlgorithm::run(int Nmax,
 
     if (verbose > 0)
     {
-        info = "\t Angle Search \t [";
+        info = "\t Angle Search \t \t [";
         bar = pBar(angles.size(), info, true);
     }
     for (int i = 0; i < angles.size(); i++)

@@ -40,14 +40,17 @@ PYBIND11_MODULE(hetbuilder_backend, m)
 
     // class bindings
     py::class_<Atoms>(m, "CppAtomsClass")
-        .def(py::init<double2dvec_t &, double2dvec_t &, int1dvec_t &>())
+        .def(py::init<double2dvec_t &, double2dvec_t &, int1dvec_t &, int1dvec_t &, double1dvec_t &>())
         .def_readwrite("lattice", &Atoms::lattice)
         .def_readwrite("positions", &Atoms::positions)
         .def_readwrite("atomic_numbers", &Atoms::atomic_numbers)
+        .def_readwrite("indices", &Atoms::indices)
+        .def_readwrite("magmoms", &Atoms::magmoms)
         .def("standardize", &Atoms::standardize, "Spglib standardization.")
         .def("print", &Atoms::print, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(), "Print information.")
         .def("scale_cell", &Atoms::scale_cell, "Scales cell.")
-        .def("compare", &Atoms::xtalcomp_compare, "Performs XtalComp check if two Atoms are equivalent.");
+        .def("compare", &Atoms::xtalcomp_compare, "Performs XtalComp check if two Atoms are equivalent.")
+        .def("get_index_mapping", &Atoms::get_index_mapping, "Returns index mapping in supercell.");
 
     py::class_<Interface>(m, "CppInterfaceClass")
         .def(py::init<Atoms &, Atoms &, Atoms &, double &, int2dvec_t &, int2dvec_t &, int &>())

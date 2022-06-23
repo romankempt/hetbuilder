@@ -5,6 +5,8 @@
 #include "spglib.h"
 #include "xtalcomp.h"
 
+#include <algorithm>
+
 // Prints lattice, positions, scaled positions and atomic numbers of atoms object.
 void Atoms::print()
 {
@@ -21,6 +23,12 @@ void Atoms::print()
         std::cout << j << " ";
     }
     std::cout << std::endl;
+};
+
+// Returns the index mapping. Mostly useful for debugging the supercell to see which atoms were moved where.
+int1dvec_t Atoms::get_index_mapping()
+{
+    return this->indices;
 };
 
 // Returns fractional coordinates.
@@ -66,14 +74,18 @@ Atoms Atoms::operator+(const Atoms &b)
     double2dvec_t pos1 = this->positions;
     double2dvec_t cell1 = this->lattice;
     int1dvec_t numbers1 = this->atomic_numbers;
+    int1dvec_t indices1 = this->indices;
+    double1dvec_t magmoms1 = this->magmoms;
 
     for (int row = 0; row < b.numAtom; row++)
     {
         pos1.push_back(b.positions[row]);
         numbers1.push_back(b.atomic_numbers[row]);
+        indices1.push_back(b.indices[row]);
+        magmoms1.push_back(b.magmoms[row]);
     }
 
-    Atoms newAtoms(cell1, pos1, numbers1);
+    Atoms newAtoms(cell1, pos1, numbers1, indices1, magmoms1);
     return newAtoms;
 };
 
@@ -113,6 +125,7 @@ void Atoms::atomic_numbers_to_spglib_types(int arr[])
 };
 
 // Standardizes unit cell and positions via spglib. Returns spacegroup if successful, otherwise returns 0.
+// Does not support magnetic moments. Magnetic moments are lost here.
 int Atoms::standardize(int to_primitive, int no_idealize, double symprec, double angle_tolerance)
 {
     double spglibPos[this->numAtom][3];
@@ -154,16 +167,19 @@ int Atoms::standardize(int to_primitive, int no_idealize, double symprec, double
         this->numAtom = newNumAtoms;
         double2dvec_t spglibScalPos;
         int1dvec_t spglibNewTypes(newNumAtoms, 0);
+        double1dvec_t newMagneticMoments(newNumAtoms, 0.00);
         for (unsigned i = 0; (i < newNumAtoms); i++)
         {
             double1dvec_t subvec = {spglibPos[i][0], spglibPos[i][1], spglibPos[i][2]};
             spglibScalPos.push_back(subvec);
             spglibNewTypes[i] = spglibTypes[i];
+            newMagneticMoments[i] = 0.00;
         }
 
         double2dvec_t cart_pos = scaled_positions_to_cartesian(spglibScalPos);
         this->positions = cart_pos;
         this->atomic_numbers = spglibNewTypes;
+        this->magmoms = newMagneticMoments;
     }
 
     return spaceGroup;
@@ -205,7 +221,8 @@ std::vector<XcVector> Atoms::positions_to_xtalcomp_positions()
     return xtalcomp_pos;
 }
 
-// Wrapper around the XtalComp Comparison Algorithm
+// Wrapper around the XtalComp Comparison Algorithm.
+// Added additional check for magnetic moments.
 bool Atoms::xtalcomp_compare(Atoms &other)
 {
     XcMatrix cell1 = this->lattice_to_xtalcomp_cell();
@@ -214,9 +231,19 @@ bool Atoms::xtalcomp_compare(Atoms &other)
     std::vector<XcVector> pos2 = other.positions_to_xtalcomp_positions();
     std::vector<unsigned int> types1 = this->atomic_numbers_to_xtalcomp_types();
     std::vector<unsigned int> types2 = other.atomic_numbers_to_xtalcomp_types();
+    // we compare if the sorted magmoms are identical
+    double1dvec_t magmoms1 = this->magmoms;
+    double1dvec_t magmoms2 = other.magmoms;
 
-    bool match = XtalComp::compare(cell1, types1, pos1,
-                                   cell2, types2, pos2,
-                                   NULL, 0.05, 0.25, false);
+    std::sort(magmoms1.begin(), magmoms1.end());
+    std::sort(magmoms2.begin(), magmoms2.end());
+    bool match = false;
+    if (magmoms1 == magmoms2)
+    {
+
+        bool match = XtalComp::compare(cell1, types1, pos1,
+                                       cell2, types2, pos2,
+                                       NULL, 0.05, 0.25, false);
+    }
     return match;
 }
