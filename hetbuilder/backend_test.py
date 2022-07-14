@@ -37,7 +37,7 @@ def test_algorithm():
 
     alg = CoincidenceAlgorithm(atoms1, atoms2)
     results = alg.run(
-        tolerance=0.1, Nmax=20, angle_limits=(0, 30), angle_stepsize=1, verbosity=2
+        tolerance=0.1, Nmax=10, angle_limits=(0, 30), angle_stepsize=0.01, verbosity=2
     )
     if results is not None:
         ip = InteractivePlot(atoms1, atoms2, results, 0.5)

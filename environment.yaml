@@ -1,0 +1,14 @@
+name: hetbuilder
+
+channels:
+  - conda-forge
+  - anaconda
+
+dependencies:
+  - python=3.9.*
+  - git
+  - pip
+  - cmake
+  - compilers
+  - numpy
+  - spglib
