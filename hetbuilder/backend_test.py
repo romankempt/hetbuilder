@@ -142,5 +142,35 @@ def test_scaling_cpp(M=4, N=5):
         print(f"M={m} N={N} \t CPP {cpp_time:e} ms")
 
 
+def test_xtalcomp():
+    graphene_cell = cellpar_to_cell(np.array([2.46, 2.46, 100.0, 90.0, 90.0, 120]))
+    graphene_positions = np.array([[0.0, 1.42028166, -1.6775], [0.0, 0.0, -1.6775]])
+    atoms1 = Atoms(
+        symbols=["C", "C"], positions=graphene_positions, cell=graphene_cell, pbc=True
+    )
+
+    atoms2 = mx2("WS2")
+    atoms2.pbc = True
+    atoms2.cell[2, 2] = 100
+
+    atoms3 = atoms1.copy()
+    atoms3.rotate(30, "z", rotate_cell=True)
+
+    a1 = ase_atoms_to_cpp_atoms(atoms1)
+    a2 = ase_atoms_to_cpp_atoms(atoms2)
+    a3 = ase_atoms_to_cpp_atoms(atoms3)
+
+    print("a1 -----")
+    # a1.print()
+    print("a2 -----")
+    # a2.print()
+    print("a3 -----")
+    # a3.print()
+    print(a1.compare(a2))
+
+    print(a1.compare(a3))
+
+
 if __name__ == "__main__":
-    test_algorithm()
+    # test_algorithm()
+    test_xtalcomp()

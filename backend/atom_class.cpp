@@ -17,10 +17,16 @@ void Atoms::print()
     std::cout << "Scaled Positions: " << std::endl;
     double2dvec_t scalpos = get_scaled_positions();
     print_2d_vector(scalpos);
+    std::cout << "Magnetic Moments: '" << std::endl;
+    for (auto j : this->magmoms)
+    {
+        std::cout << "\t" << j << " ";
+    }
+    std::cout << std::endl;
     std::cout << "Atomic Numbers: " << std::endl;
     for (auto j : this->atomic_numbers)
     {
-        std::cout << j << " ";
+        std::cout << "\t" << j << " ";
     }
     std::cout << std::endl;
 };
@@ -240,10 +246,11 @@ bool Atoms::xtalcomp_compare(Atoms &other)
     bool match = false;
     if (magmoms1 == magmoms2)
     {
-
-        bool match = XtalComp::compare(cell1, types1, pos1,
-                                       cell2, types2, pos2,
-                                       NULL, 0.05, 0.25, false);
+        match = XtalComp::compare(cell1, types1, pos1,
+                                  cell2, types2, pos2,
+                                  NULL, 0.05, 0.25, false);
+        // std::cout << "XtalComp returns " << match << std::endl;
     }
+
     return match;
 }

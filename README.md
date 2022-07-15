@@ -87,3 +87,9 @@ If you use this tool, please cite 10.5281/zenodo.4721346.
 
 1. `error: '::timespec_get' has not been declared` [see here](https://root-forum.cern.ch/t/error-timespec-get-has-not-been-declared-with-conda-root-package/45712). 
 In this case, the solution seems to be to run `conda upgrade -c conda-forge --all`.
+2. Installation troubles, e.g., with spglib:
+   - Try to update your conda forge packages:
+   - `conda config --add channels conda-forge`
+   - `conda config --set channel_priority strict`
+   - `conda update --all`
+   - `conda install -c conda-forge spglig`

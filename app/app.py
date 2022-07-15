@@ -12,6 +12,9 @@ from flask import (
 from flask_cors import CORS
 import random
 import sys
+import json
+
+from hetbuilder.atom_checks import check_atoms
 
 app = Flask(__name__)
 
@@ -34,16 +37,15 @@ def hello():
     return str(random.randint(0, 100))
 
 
-@app.route("/api/upload", methods=["POST"])
-def upload_file():
-    file = request.files["file"]
-    print(file, file=sys.stderr)
-    return "done"
-
-
 @app.route("/post", methods=["POST"])
 def post():
-    return '{"foo": 1}'
+    if request.method == "POST":
+        f1 = request.files.get("lower")
+        f2 = request.files.get("upper")
+        print(f1, f2)
+        # data = jsonify(request.get_json())
+
+        return '{"foo": 1}'
 
 
 if __name__ == "__main__":

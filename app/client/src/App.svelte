@@ -1,5 +1,4 @@
 <script lang="ts">
-	import axios from "axios";
 	export let name: string = "Roman";
 
 	let rand = -1;
@@ -9,56 +8,45 @@
 			.then((d) => (rand = d));
 	}
 
+	let file1;
+	let file2;
 	let files;
-
-	$: if (files) {
+	$: if (file1 || file2) {
 		// Note that `files` is of type `FileList`, not an Array:
 		// https://developer.mozilla.org/en-US/docs/Web/API/FileList
-		console.log(files);
+		console.log(file1);
+		console.log(file2);
 
-		for (const file of files) {
+		for (const file of file1) {
+			console.log(`${file.name}: ${file.size} bytes`);
+		}
+		for (const file of file2) {
 			console.log(`${file.name}: ${file.size} bytes`);
 		}
 	}
 
-	function uploadFile(e) {
+	async function doPost(e) {
 		e.preventDefault();
-		let file = this.state.fileToBeSent;
-		const formData = new FormData();
+		//const formData = new FormData(e.target);
+		//formData.append("files", files);
 
-		formData.append("file", file);
+		//const data = {};
+		//for (let field of formData) {
+		//	const [key, value] = field;
+		//	data[key] = value;
+		//}
+		//console.log(data);
 
-		axios
-			.post("/api/upload", formData)
-			.then((res) => console.log(res))
-			.catch((err) => console.warn(err));
-	}
-
-	let foo: string = "foo";
-	let bar: string = "bar";
-	let result = null;
-	async function doPost() {
 		const res = await fetch("./post", {
 			method: "POST",
-			body: JSON.stringify({
-				foo,
-				bar,
-			}),
+			//body: formData,
 		});
-		console.log(res);
-		const json = await res.json();
-		console.log(json);
-		result = JSON.stringify(json);
 	}
 </script>
 
 <main>
 	<div>
 		<h1>Hello {name}!</h1>
-		<p>
-			Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to
-			learn how to build Svelte apps.
-		</p>
 	</div>
 
 	<div>
@@ -67,30 +55,39 @@
 			<button on:click={getRand}>Get a random number</button>
 		</p>
 	</div>
-
 	<div id="upload">
-		<label for="upload_lower"> Upload a structure: </label>
-		<input
-			accept=".xyz, .cif, .in"
-			bind:files
-			id="upload_lower"
-			name="lower"
-			type="file"
-		/>
-		<button on:click={uploadFile}> Upload </button>
+		<form on:submit|preventDefault={doPost}>
+			<label for="upload_lower"> Upload a structure: </label>
+			<input
+				accept=".xyz, .cif, .in"
+				bind:file1
+				id="upload_lower"
+				name="lower"
+				type="file"
+			/>
+			<input
+				accept=".xyz, .cif, .in"
+				bind:file2
+				id="upload_upper"
+				name="upper"
+				type="file"
+			/>
+			<button type="submit"> Upload </button>
+		</form>
 	</div>
-
-	<input bind:value={foo} />
-	<input bind:value={bar} />
-	<button type="button" on:click={doPost}> Post it. </button>
-	<p>Result:</p>
-	<pre>
-	{result}
-	</pre>
 </main>
 
-{#if files}
+{#if file1}
 	<h2>Selected files:</h2>
+	<p>{file1.length}</p>
+	{#each Array.from(files) as file}
+		<p>{file.name} ({file.size} bytes)</p>
+	{/each}
+{/if}
+
+{#if file2}
+	<h2>Selected files:</h2>
+	<p>{file2.length}</p>
 	{#each Array.from(files) as file}
 		<p>{file.name} ({file.size} bytes)</p>
 	{/each}
@@ -104,18 +101,29 @@
 		margin: 0 auto;
 	}
 
-	#upload_lower {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-flow: column;
-	}
-
 	h1 {
 		color: #ff3e00;
 		text-transform: uppercase;
 		font-size: 4em;
 		font-weight: 100;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+	form {
+		display: flex;
+		flex-direction: column;
+		width: 300px;
+	}
+
+	form > div {
+		display: flex;
+		justify-content: space-between;
+	}
+
+	form > div + * {
+		margin-top: 10px;
 	}
 
 	@media (min-width: 640px) {
