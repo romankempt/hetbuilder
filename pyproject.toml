@@ -2,12 +2,28 @@
 requires = [
   "setuptools>=42",
   "wheel",
-  "scikit-build",
-  "cmake",
+  "scikit-build-core>=0.3.3",
   "pybind11",
   "pybind11-global",
   "numpy",
-  "spglib",
-  "ninja; platform_system!='Windows'"
+  "spglib"
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "hetbuilder"
+readme = "README.md"
+authors = [
+  { name = "Roman Kempt", email = "roman.kempt@web.de" },
+]
+requires-python = "==3.11"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.scikit-build]
+wheel.expand-macos-universal-tags = true
+
+
+

@@ -24,7 +24,7 @@ conda env create -n hetbuilder python=3.11
 
 Then install the build-time dependencies first:
 ```bash
-conda install -c conda-forge compilers git pip cmake spglib=2.1.0 pybind11=2.11.1
+conda install -c conda-forge compilers git pip cmake scikit-build spglib=2.1.0 pybind11=2.11.1
 ```
 
 <!-- Then, you can install the project from pip:
@@ -47,10 +47,15 @@ conda install conda-build
 
 Download or clone the github repository. Then, `cd` to the repository and
 ```bash
-conda install -c conda-forge compilers git pip cmake spglib pybind11
 pip install -r requirements.txt
-conda in
+conda develop .
+mkdir build
+cd build
+cmake .. && make
+cp hetbuilder_backend.*.so ../hetbuilder/
 ```
+
+The last step is necessary so that the C++ extension is found in the module directory.
 
 ## First steps
 
