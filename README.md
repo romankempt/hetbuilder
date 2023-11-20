@@ -19,22 +19,37 @@ Otherwise, these will be built during the installation from the submodules.
 
 Create a clean conda environment:
 ```bash
-conda env create -n hetbuilder python=3.9
+conda env create -n hetbuilder python=3.11
 ```
 
 Then install the build-time dependencies first:
 ```bash
-conda install -c conda-forge compilers git pip cmake spglib pybind11
+conda install -c conda-forge compilers git pip cmake spglib=2.1.0 pybind11=2.11.1
 ```
 
-Then, you can install the project from pip:
+<!-- Then, you can install the project from pip:
 ```bash
 pip install hetbuilder
 ```
+-->
 
-If that does not work, try directly installing from git:
+Install directly from git via pip:
 ```bash
 pip install git+https://github.com/romankempt/hetbuilder.git
+```
+
+#### Development Installation with Anaconda
+
+After creating the same environment, nstall `conda-build`:
+```bash
+conda install conda-build
+```
+
+Download or clone the github repository. Then, `cd` to the repository and
+```bash
+conda install -c conda-forge compilers git pip cmake spglib pybind11
+pip install -r requirements.txt
+conda in
 ```
 
 ## First steps
