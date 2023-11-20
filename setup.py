@@ -66,7 +66,7 @@ setup(
     ],
     classifiers=[
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: C++",
         "Topic :: Scientific/Engineering :: Chemistry",
         "Topic :: Scientific/Engineering :: Physics",
