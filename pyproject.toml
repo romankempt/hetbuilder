@@ -16,8 +16,9 @@ readme = "README.md"
 authors = [
   { name = "Roman Kempt", email = "roman.kempt@web.de" },
 ]
-requires-python = "==3.11"
-dynamic = ["dependencies", "version"]
+requires-python = ">=3.11"
+version = "0.8.1"
+dynamic = ["dependencies"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

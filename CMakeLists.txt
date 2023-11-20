@@ -117,7 +117,7 @@ else()
                             )
 endif()
 
-install(TARGETS ${TARGET} LIBRARY DESTINATION .)
+install(TARGETS ${TARGET} DESTINATION hetbuilder)
 
 # Quiet a warning, since this project is only valid with SKBUILD
 # set(ignoreMe "${SKBUILD}")

@@ -106,7 +106,7 @@ def build(
     ),
 ) -> None:
     """Builds heterostructure interface for given choice of parameters.
-    
+
     Example:
         hetbuilder build graphene.xyz MoS2.xyz -N 10 -al 0 30 -as 0.1
     """
@@ -182,7 +182,7 @@ def match(
     ),
 ):
     """Matches two structures to find lowest-stress coincidence lattice.
-    
+
     Automatically checks different tolerance values.
 
     Example:
