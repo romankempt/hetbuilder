@@ -51,7 +51,7 @@ setup(
     # package_dir={"": ""},
     cmake_install_dir="hetbuilder",
     include_package_data=True,
-    scripts=["bin/hetbuilder"],
+    # scripts=["./bin/hetbuilder"],
     install_requires=[
         "numpy",
         "scipy",

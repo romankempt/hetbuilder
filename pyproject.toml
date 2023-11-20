@@ -27,5 +27,7 @@ version = {attr = "package.__version"}
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
 
+[project.scripts]
+hetbuilder = "hetbuilder.cli:app"
 
 
