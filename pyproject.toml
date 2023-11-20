@@ -17,10 +17,11 @@ authors = [
   { name = "Roman Kempt", email = "roman.kempt@web.de" },
 ]
 requires-python = "==3.11"
-dynamic = ["dependencies"]
+dynamic = ["dependencies", "version"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
+version = {attr = "package.__version"}
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
