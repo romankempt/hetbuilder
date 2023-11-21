@@ -21,7 +21,7 @@ dependencies:
       - commonmark==0.9
       - matplotlib==3.8
       - networkx==3.2
-      - pretty-errors==1.2
+      - pretty-errors==1.2.25
       - recommonmark==0.7
       - rich==13.7
       - scipy==1.11
