@@ -22,5 +22,6 @@ jobs:
           conda list
           pip install .
       - shell: bash -l {0}
+        run: |
           which hetbuilder
           hetbuilder --help
