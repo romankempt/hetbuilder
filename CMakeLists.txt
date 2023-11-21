@@ -102,7 +102,7 @@ if(USE_OPENMP)
                                 PRIVATE symspg
                                 PRIVATE XtalComp
                                 PRIVATE OpenMP::OpenMP_CXX  
-                                PRIVATE pybind11::module pybind11::lto pybind11::windows_extras                                                              
+                                PRIVATE pybind11::module pybind11::lto
                                 )
     else()
         message(STATUS "Could not find OpenMP")
@@ -113,7 +113,7 @@ else()
     target_link_libraries(${TARGET} 
                             PRIVATE symspg
                             PRIVATE XtalComp
-                            PRIVATE pybind11::module pybind11::lto pybind11::windows_extras
+                            PRIVATE pybind11::module pybind11::lto
                             )
 endif()
 
