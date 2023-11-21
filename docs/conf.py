@@ -62,7 +62,7 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.githubpages",
     "recommonmark",
-    "sphinxcontrib.napoleon",
+    "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
     "sphinx.ext.intersphinx",
