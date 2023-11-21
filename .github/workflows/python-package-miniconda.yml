@@ -20,7 +20,6 @@ jobs:
         run: |
           conda info
           conda list
-          conda install -c conda-forge compilers git pip cmake scikit-build spglib=2.1.0 pybind11=2.11.1
           pip install .
       - name: Lint
         shell: bash -l {0}

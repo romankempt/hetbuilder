@@ -3,26 +3,26 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - click=8.1.7
-  - cmake=3.21.3
-  - compilers=1.5.2
-  - jinja2=3.1.20
-  - numpy=1.26.0
-  - pip=23.3.1
-  - pybind11=2.11.12
-  - pybind11-global=2.11.1
-  - scikit-build=0.17.6
-  - setuptools=68.0.0
-  - spglib=2.1.00
-  - wheel=0.41.2
+  - click=8.1
+  - cmake=3.21
+  - compilers=1.5
+  - jinja2=3.1
+  - numpy=1.26
+  - pip=23.3
+  - pybind11=2.11
+  - pybind11-global=2.11
+  - scikit-build=0.17
+  - setuptools=68.0
+  - spglib=2.1
+  - wheel=0.41
   - pip:
-      - ase==3.22.1
-      - colorama==0.4.6
-      - commonmark==0.9.1
-      - matplotlib==3.8.0
-      - networkx==3.2.1
-      - pretty-errors==1.2.25
-      - recommonmark==0.7.1
-      - rich==13.7.0
-      - scipy==1.11.3
-      - typer==0.9.0
+      - ase==3.22
+      - colorama==0.4
+      - commonmark==0.9
+      - matplotlib==3.8
+      - networkx==3.2
+      - pretty-errors==1.2
+      - recommonmark==0.7
+      - rich==13.7
+      - scipy==1.11
+      - typer==0.9
